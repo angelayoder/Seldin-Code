@@ -1,0 +1,13 @@
+---
+title: "Seldin Report: Ssec Scores"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Report on Ssec scores from "Seldin Methods"
+  a. Find distribution of Ssec values
+  b. Match top Ssec values to gene symbols
+  c. Figure out threshold/significance test
+  d. Functional Enrichment

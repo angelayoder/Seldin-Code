@@ -1,0 +1,90 @@
+---
+title: "Report for Tissue-Specific Proteins"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Report results of tissue-specific proteins data
+
+```{r, echo = FALSE, message = FALSE}
+# Packages
+library(tidyverse)
+
+# Data Input
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+protein_brain = read.csv("Brain_WGCNA.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+ts_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
+protein_liver = read.csv("Liver_WGCNA.csv")
+secreted_protein_liver = read.csv("Secreted_Liver.csv")
+ts_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
+
+
+
+############## Calculate R squared for tissue specific and not tissue specific########################
+fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
+fin.r.squared_brain_sec = read.csv("R_Squared_Brain_Sec.csv")
+fin.r.squared_liver = read.csv("R_Squared_Liver.csv")
+fin.r.squared_liver_sec = read.csv("R_Squared_Liver_Sec.csv")
+fin.r.squared_brain_notsec = read.csv("R_Squared_Brain_NotSec.csv")
+fin.r.squared_liver_notsec = read.csv("R_Squared_Liver_NotSec.csv")
+
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+protein_brain = fix.read.csv(protein_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+ts_protein_brain = fix.read.csv(ts_protein_brain)
+
+protein_liver = fix.read.csv(protein_liver)
+secreted_protein_liver = fix.read.csv(secreted_protein_liver)
+ts_protein_liver = fix.read.csv(ts_protein_liver)
+
+fin.r.squared_brain = fix.read.csv(fin.r.squared_brain)
+fin.r.squared_brain_sec = fix.read.csv(fin.r.squared_brain_sec)
+fin.r.squared_liver = fix.read.csv(fin.r.squared_liver)
+fin.r.squared_liver_sec = fix.read.csv(fin.r.squared_liver_sec)
+fin.r.squared_brain_notsec = fix.read.csv(fin.r.squared_brain_notsec)
+fin.r.squared_liver_notsec = fix.read.csv(fin.r.squared_liver_notsec)
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+# table comparing number of genes
+ngenes = ncol(protein_brain)
+ngenes_sec = ncol(secreted_protein_brain)
+ngenes_ts = ncol(ts_protein_brain)
+
+ngenes.l = ncol(protein_liver)
+ngenes_sec.l = ncol(secreted_protein_liver)
+ngenes_ts.l = ncol(ts_protein_liver)
+tot_sec = 1760 # from secreted uniprot data
+tot_ts = "WHAT"
+
+num = c(ngenes, ngenes_sec, ngenes_ts, ngenes.l, ngenes_sec.l, ngenes_ts.l, tot_sec, tot_ts)
+
+names(num) = c("Brain: Full Data", "Brain: Secreted Data", "Brain: Tissue-Specific Data", "Liver: Full Data", "Liver: Secreted Data", "Liver: Tissue-Specific Data", "Total Secreted Rat Proteins", "Total Tissue-Specific Rat Proteins")
+
+knitr::kable(num, caption = "Number of Genes", col.names = NA, )
+
+# compare shared genes between secreted brain and secreted liver
+
+gee = intersect(colnames(ts_protein_brain), colnames(ts_protein_liver))
+
+int = c(length(colnames(ts_protein_brain)), length(gee), length(colnames(ts_protein_liver)))
+names(int) = c("Tissue-Specific Proteins Brain", "Tissue-Specific Proteins Shared by Brain and Liver", "Tissue-Specific Proteins Liver")
+
+knitr::kable(int)
+
+## THis isn't right...
+
+```
