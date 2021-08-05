@@ -17,21 +17,14 @@ library(tidyverse)
 setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 protein_brain = read.csv("Brain_WGCNA.csv")
 secreted_protein_brain = read.csv("Secreted_Brain.csv")
-ts_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
+#ts_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
 protein_liver = read.csv("Liver_WGCNA.csv")
 secreted_protein_liver = read.csv("Secreted_Liver.csv")
-ts_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
+#ts_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
 
 
-
-############## Calculate R squared for tissue specific and not tissue specific########################
 fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
-fin.r.squared_brain_sec = read.csv("R_Squared_Brain_Sec.csv")
 fin.r.squared_liver = read.csv("R_Squared_Liver.csv")
-fin.r.squared_liver_sec = read.csv("R_Squared_Liver_Sec.csv")
-fin.r.squared_brain_notsec = read.csv("R_Squared_Brain_NotSec.csv")
-fin.r.squared_liver_notsec = read.csv("R_Squared_Liver_NotSec.csv")
-
 
 fix.read.csv = function(x)
 {
@@ -43,18 +36,39 @@ fix.read.csv = function(x)
 
 protein_brain = fix.read.csv(protein_brain)
 secreted_protein_brain = fix.read.csv(secreted_protein_brain)
-ts_protein_brain = fix.read.csv(ts_protein_brain)
+#ts_protein_brain = fix.read.csv(ts_protein_brain)
 
 protein_liver = fix.read.csv(protein_liver)
 secreted_protein_liver = fix.read.csv(secreted_protein_liver)
-ts_protein_liver = fix.read.csv(ts_protein_liver)
+#ts_protein_liver = fix.read.csv(ts_protein_liver)
 
 fin.r.squared_brain = fix.read.csv(fin.r.squared_brain)
-fin.r.squared_brain_sec = fix.read.csv(fin.r.squared_brain_sec)
 fin.r.squared_liver = fix.read.csv(fin.r.squared_liver)
-fin.r.squared_liver_sec = fix.read.csv(fin.r.squared_liver_sec)
-fin.r.squared_brain_notsec = fix.read.csv(fin.r.squared_brain_notsec)
-fin.r.squared_liver_notsec = fix.read.csv(fin.r.squared_liver_notsec)
+
+
+
+```
+
+```{r}
+# looking for unique genes
+
+genes_brain = colnames(secreted_protein_brain)
+genes_liver = colnames(secreted_protein_liver)
+
+gee = genes_brain %in% genes_liver
+gee = gee == FALSE
+only_brain = genes_brain[gee]
+
+wee = genes_liver %in% genes_brain
+wee = wee == FALSE
+only_liver = genes_liver[wee]
+
+ts_protein_brain = secreted_protein_brain[, colnames(secreted_protein_brain) %in% only_brain]
+ts_protein_liver = secreted_protein_liver[, colnames(secreted_protein_liver) %in% only_liver]
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(ts_protein_brain, "TissueSpecific2_Protein_Brain.csv")
+write.csv(ts_protein_liver, "TissueSpecific2_Protein_Liver.csv")
 
 ```
 
@@ -68,7 +82,7 @@ ngenes.l = ncol(protein_liver)
 ngenes_sec.l = ncol(secreted_protein_liver)
 ngenes_ts.l = ncol(ts_protein_liver)
 tot_sec = 1760 # from secreted uniprot data
-tot_ts = "WHAT"
+tot_ts = ngenes_ts + ngenes_ts.l
 
 num = c(ngenes, ngenes_sec, ngenes_ts, ngenes.l, ngenes_sec.l, ngenes_ts.l, tot_sec, tot_ts)
 
@@ -85,6 +99,69 @@ names(int) = c("Tissue-Specific Proteins Brain", "Tissue-Specific Proteins Share
 
 knitr::kable(int)
 
-## THis isn't right...
+```
+
+```{r}
+# R squared
+
+rsq.brain = sub(" ~ strain_factor_brain.*", "", fin.r.squared_brain$names_brain)
+rsq.liver = sub(" ~ strain_factor_liver.*", "", fin.r.squared_liver$names_liver)
+
+fin.r.squared_brain[,1] = rsq.brain
+fin.r.squared_liver[,1] = rsq.liver
+
+r.squared_brain_ts = fin.r.squared_brain[fin.r.squared_brain$names_brain %in% colnames(ts_protein_brain),]
+r.squared_liver_ts = fin.r.squared_liver[fin.r.squared_liver$names_liver %in% colnames(ts_protein_liver),]
+
+r.squared_brain_notts = fin.r.squared_brain[!(fin.r.squared_brain$names_brain %in% colnames(ts_protein_brain)),]
+r.squared_liver_notts = fin.r.squared_liver[!(fin.r.squared_liver$names_liver %in% colnames(ts_protein_liver)),]
+
+#brain
+
+gee = cbind(rep("not ts", times = dim(r.squared_brain_notts)[1]), r.squared_brain_notts[,2])
+gee2 = cbind(rep("ts", times = dim(r.squared_brain_ts)[1]), r.squared_brain_ts[,2])
+
+wil.b = rbind(gee, gee2)
+wil.b = as.data.frame(wil.b)
+colnames(wil.b) = c("trt", "r.sq")
+
+wil.b$trt = as.factor(wil.b$trt)
+wil.b$r.sq = as.numeric(wil.b$r.sq)
+
+wil.brain = coin::wilcox_test(r.sq ~ trt, wil.b)
+
+# liver
+
+gee = cbind(rep("not ts", times = dim(r.squared_liver_notts)[1]), r.squared_liver_notts[,2])
+gee2 = cbind(rep("ts", times = dim(r.squared_liver_ts)[1]), r.squared_liver_ts[,2])
+
+wil.l = rbind(gee, gee2)
+wil.l = as.data.frame(wil.l)
+colnames(wil.l) = c("trt", "r.sq")
+
+wil.l$trt = as.factor(wil.l$trt)
+wil.l$r.sq = as.numeric(wil.l$r.sq)
+
+wil.liver = coin::wilcox_test(r.sq ~ trt, wil.l)
+
+```
+
+```{r}
+
+# Density R Squared
+
+ggplot(wil.b, aes(x = r.sq, color = trt)) + 
+  geom_density() +
+  labs(title="R Squared Density Curve: Brain",x="R Squared", y = "Density")
+
+ggplot(wil.l, aes(x = r.sq, color = trt)) + 
+  geom_density() +
+  labs(title="R Squared Density Curve: Liver",x="R Squared", y = "Density")
+
+# Box R Squared
+
+boxplot(fin.r.squared_brain[,2], fin.r.squared_brain_sec[,2], names = c("Not TS", "TS"), xlab = "R Squared", main = "R Squared Brain Data")
+boxplot(fin.r.squared_liver[,2], fin.r.squared_liver_sec[,2], names = c("Not TS", "TS"), xlab = "R Squared", main = "R Squared Liver Data")
+
 
 ```
