@@ -11,3 +11,182 @@ date: "`r Sys.Date()`"
   b. Match top Ssec values to gene symbols
   c. Figure out threshold/significance test
   d. Functional Enrichment
+  
+* Using exclusive ts proteins unless we decide later to change back to Uniprot TS
+  
+```{r, echo = FALSE, message = FALSE}
+
+library(tidyverse)
+library(reshape2)
+library(WGCNA)
+#library(reshape)
+#library(ggplot2)
+
+# Data Input
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+protein_liver = read.csv("Liver_WGCNA.csv")
+protein_brain = read.csv("Brain_WGCNA.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+secreted_protein_liver = read.csv("Secreted_Liver.csv")
+sec_annot = read.csv("Sec_Annotation.csv")
+tissuespec_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
+tissuespec_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
+ts_protein_brain = read.csv("TissueSpecific2_Protein_Brain.csv")
+ts_protein_liver = read.csv("TissueSpecific2_Protein_Liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+protein_liver = fix.read.csv(protein_liver)
+protein_brain = fix.read.csv(protein_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+secreted_protein_liver = fix.read.csv(secreted_protein_liver)
+sec_annot = fix.read.csv(sec_annot)
+tissuespec_protein_brain = fix.read.csv(tissuespec_protein_brain)
+tissuespec_protein_liver = fix.read.csv(tissuespec_protein_liver)
+ts_protein_brain = fix.read.csv(ts_protein_brain)
+ts_protein_liver = fix.read.csv(ts_protein_liver)
+
+```
+Calculating Ssec values
+```{r, echo = FALSE, message = FALSE}
+
+#### BRAIN ####
+
+brain.liv = bicorAndPvalue(secreted_protein_brain, protein_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+## tissue-specific genes
+
+ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+top_brain = head(ts_Ssec_brain[,1])
+
+
+#### LIVER ####
+
+liv.brain = bicorAndPvalue(secreted_protein_liver, protein_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain$p))
+
+Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+## tissue-specific genes
+
+ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+top_liver = head(ts_Ssec_liver[,1])
+bot_liver = tail(ts_Ssec_liver[,1])
+
+```
+
+PROCEED WITH CAUTION
+```{r}
+####################################
+# Calc Ssec for all proteins# Don't do this !!
+
+brain.liv = bicorAndPvalue(protein_brain, protein_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+## tissue-specific genes
+
+top_brain = head(Ssec_brain[,1])
+```
+
+```{r}
+# Visualizations
+hist(Ssec_brain$Ssec)
+hist(ts_Ssec_brain$Ssec)
+
+h1 = cbind(rep("brain", times = length(Ssec_brain$Ssec)), Ssec_brain$Ssec)
+h2 = cbind(rep("TS brain", times = length(ts_Ssec_brain$Ssec)), ts_Ssec_brain$Ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Ssec Distribution: Secreted Proteins v. TS Proteins", x = "Ssec", y = "Density")
+
+
+plotting = melt(liv.brain$p, id.vars = "refseq")
+limit = plotting[as.character(plotting$Var1) %in% c(top_liver, bot_liver),]
+
+ggplot(limit, aes(value, color = Var1)) + 
+  geom_density() +
+  labs(title="P-Value Density Curve: Top6 and Bottom6 Liver Proteins", x = "P-Value", y = "Density")
+
+
+```
+NEXT: permute null distribution of Ssec; Calculate Ssec with cutoff; maybe figure out how to run Ssec on non-secreted proteins; null distribution of p-values?
+
+We permuted the target tissue strains and recalculated Ssec to
+construct the null distribution and maintain the gene-gene correlation structures in each tissue. These tests typically required
+1,000–1,000,000 permutations, listed as p values in Table S1.
+The permutation tests were designed to specifically to allow generation of a statistic while maintaining correlation structure to
+limit the influence of inflation of cross-tissue gene correlations
+(discussed below). We note that in these tests the p values
+used reflect a placeholder for the correlation coefficient, which
+does not require independence. 
+
+```{r}
+### This is no good
+
+brain.liv_p = brain.liv$p
+
+brain.liv_perm = apply(brain.liv_p, 2, sample, size = dim(brain.liv_p)[1], replace = F)
+rownames(brain.liv_perm) = as.character(1:dim(brain.liv_perm)[1])
+
+# calc Ssec
+
+scores = rowSums(-log(brain.liv_perm))
+
+Ssec_brain_perm = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+hist(Ssec_brain$Ssec)
+hist(Ssec_brain_perm$Ssec)
+
+
+```
+```{r}
+
+#permute strain names in target tissue array
+# bicor> pval> Ssec val
+# repeat 1000- compare observed value to mean of permuted values
+
+```
+
