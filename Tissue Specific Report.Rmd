@@ -8,6 +8,12 @@ date: "`r Sys.Date()`"
 
 1. Report results of tissue-specific proteins data
 
+The ensembl rat liver and brain RNAseq data was downloaded from BioMart database (accessed 2021). Inbred strains were excluded, leaving only recombinant inbred strains. Enrichment data was retrieved from BiomaRt (version number 2.48.0), which was used to exclude non-protein-coding genes from the data set. This resulted in a dataset of 30 strains and 16,457 genes for brain tissue, and 30 strains and 14,109 genes for liver tissue. 
+
+From there, the data was reduced to secreted proteins, then to tissue-specific secreted proteins. Results for protein-coding genes were filtered by species "Rattus norvegicus" and subcellular location "secreted" from the uniprot database (accessed 2021). The uniprot IDs from the new secreted dataset were compared to the converted uniprot IDs (via biomaRt) of the brain and liver tissue datasets. From the secreted proteins datasets, we then determined the proteins in the brain and liver datasets were exclusive to those datasets (only found in the brain dataset OR the liver dataset). This resulted in two tissue-specific secreted protein datasets, with 174 in the brain dataset, and 35 in the liver dataset.  
+
+The following report was completed using `r R.Version()$version.string`. Additionally, the packages WGCNA (version 1.70.3), broom (version 0.7.7), tidyverse (version `r packageVersion("tidyverse")`), and knitr (version `r packageVersion("knitr")`). 
+
 ```{r, echo = FALSE, message = FALSE}
 # Packages
 library(tidyverse)
@@ -49,7 +55,7 @@ fin.r.squared_liver = fix.read.csv(fin.r.squared_liver)
 
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE}
 # looking for unique genes
 
 genes_brain = colnames(secreted_protein_brain)
@@ -101,7 +107,7 @@ knitr::kable(int)
 
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE}
 # R squared
 
 rsq.brain = sub(" ~ strain_factor_brain.*", "", fin.r.squared_brain$names_brain)
@@ -146,7 +152,9 @@ wil.liver = coin::wilcox_test(r.sq ~ trt, wil.l)
 
 ```
 
-```{r}
+The R-squared density curves for the brain data below show similar peaks. The curves for the liver data indicate a greater right skew in the tissue-specific proteins. For both sets of data, the distinction is not as clear as the secreted proteins dataset, likely due to small sample size. 
+
+```{r, echo = FALSE, message = FALSE}
 
 # Density R Squared
 
@@ -160,8 +168,29 @@ ggplot(wil.l, aes(x = r.sq, color = trt)) +
 
 # Box R Squared
 
-boxplot(fin.r.squared_brain[,2], fin.r.squared_brain_sec[,2], names = c("Not TS", "TS"), xlab = "R Squared", main = "R Squared Brain Data")
-boxplot(fin.r.squared_liver[,2], fin.r.squared_liver_sec[,2], names = c("Not TS", "TS"), xlab = "R Squared", main = "R Squared Liver Data")
+boxplot(fin.r.squared_brain[,2], r.squared_brain_ts[,2], names = c("Not TS", "TS"), xlab = "R Squared", main = "R Squared Brain Data")
+boxplot(fin.r.squared_liver[,2], r.squared_liver_ts[,2], names = c("Not TS", "TS"), xlab = "R Squared", main = "R Squared Liver Data")
 
 
 ```
+
+We tested whether the heritability of the non-tissue-specific and tissue specific datasets were significantly different using the Wilcoxon-Mann-Whitney Test. Both tests showed a significant difference at alpha = 0.05, however the p-value for the brain data was very close to 0.05. 
+
+Non-Tissue-Specific Brain Dataset v. Tissue-Specific Brain Dataset: 
+
+```{r, echo = FALSE, message = FALSE}
+wil.brain
+
+
+
+```
+
+Non-Tissue-Specific Liver Dataset v. Tissue-Specific Liver Dataset:
+
+```{r, echo = FALSE, message = FALSE}
+
+wil.liver
+
+
+```
+
