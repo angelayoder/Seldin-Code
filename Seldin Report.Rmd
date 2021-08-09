@@ -8,9 +8,7 @@ date: "`r Sys.Date()`"
 
 1. Report on Ssec scores from "Seldin Methods"
   a. Find distribution of Ssec values
-  b. Match top Ssec values to gene symbols
-  c. Figure out threshold/significance test
-  d. Functional Enrichment
+  b. Find distribution of correlation p-values
   
 * Using exclusive ts proteins unless we decide later to change back to Uniprot TS
   
@@ -75,6 +73,7 @@ Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
 
 ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
 top_brain = head(ts_Ssec_brain[,1])
+bot_brain = tail(ts_Ssec_brain[,1])
 
 
 #### LIVER ####
@@ -99,7 +98,7 @@ bot_liver = tail(ts_Ssec_liver[,1])
 ```
 
 PROCEED WITH CAUTION
-```{r}
+```{r, eval = FALSE}
 ####################################
 # Calc Ssec for all proteins# Don't do this !!
 
@@ -121,9 +120,10 @@ top_brain = head(Ssec_brain[,1])
 
 ```{r}
 # Visualizations
-hist(Ssec_brain$Ssec)
-hist(ts_Ssec_brain$Ssec)
+#hist(Ssec_brain$Ssec)
+#hist(ts_Ssec_brain$Ssec)
 
+#Brain
 h1 = cbind(rep("brain", times = length(Ssec_brain$Ssec)), Ssec_brain$Ssec)
 h2 = cbind(rep("TS brain", times = length(ts_Ssec_brain$Ssec)), ts_Ssec_brain$Ssec)
 
@@ -136,9 +136,38 @@ compare$val = as.numeric(compare$val)
 
 ggplot(compare, aes(val, color = trt)) + 
   geom_density() +
-  labs(title="Ssec Distribution: Secreted Proteins v. TS Proteins", x = "Ssec", y = "Density")
+  labs(title="Brain Ssec Distribution: Secreted Proteins v. TS Proteins", x = "Ssec", y = "Density")
+
+# Liver
+h1 = cbind(rep("liver", times = length(Ssec_liver$Ssec)), Ssec_liver$Ssec)
+h2 = cbind(rep("TS liver", times = length(ts_Ssec_liver$Ssec)), ts_Ssec_liver$Ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
 
 
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Liver Ssec Distribution: Secreted Proteins v. TS Proteins", x = "Ssec", y = "Density")
+
+```
+
+The above graphs show the density distribution of Ssec scores of the secreted proteins and the tissue-specific proteins (a subset of secreted proteins). The shape of the distributions are not very different, indicating that tissue-specificity does not make it more likely that there will be a significant relationship with target-tissue proteins. Consider the relationship between the non-tissue-specific proteins and the target tissue expression. 
+
+```{r}
+##
+# brain
+plotting = melt(brain.liv$p, id.vars = "refseq")
+limit = plotting[as.character(plotting$Var1) %in% c(top_brain, bot_brain),]
+
+ggplot(limit, aes(value, color = Var1)) + 
+  geom_density() +
+  labs(title="P-Value Density Curve: Top6 and Bottom6 Brain Proteins", x = "P-Value", y = "Density")
+
+# liver
 plotting = melt(liv.brain$p, id.vars = "refseq")
 limit = plotting[as.character(plotting$Var1) %in% c(top_liver, bot_liver),]
 
@@ -148,6 +177,36 @@ ggplot(limit, aes(value, color = Var1)) +
 
 
 ```
+
+The above two plots are the density distribution of p-values within the proteins with the highest and lowest Ssec scores. We can see that the top Ssec score proteins have a peak on the lower end of p-values, which makes sense given they have the highest Ssec scores. Are there a high number of low but not significantly low p-values that could inflate these? Are we discounting some relationships because there aren't a lot of connections, but a small number of strong connections? The log transformation of the pvalues should weigh the lowest p-values much higher. Don't want to entirely discount pvalues just under a certain threshold. 
+
+Secreted v TS- don't change shape as you go from secreted to tissue specific. Does that mean tissue specific not more likely to have a relationship with target tissue? See if correlation with proteins across tissues is more significant than the same correlation with the same proteins within the tissue.... Would secreted proteins have an effect on its own tissue? Perhaps some kind of relationship
+Pval. Do we care at all about the magnitude of the correlation? I know we're not interested in direction. 
+
+```{r}
+# brain
+magn = brain.liv$bicor
+
+plotting = melt(magn, id.vars = "refseq")
+limit = rbind(plotting[as.character(plotting$Var1) %in% top_brain,], plotting[as.character(plotting$Var1) %in% bot_brain,])
+
+ggplot(limit, aes(value, color = Var1)) + 
+  geom_density() +
+  labs(title="Magnitude Density Curve: Top6 and Bottom6 Brain Proteins", x = "Correlation", y = "Density")
+
+# liver
+magn = liv.brain$bicor
+plotting = melt(magn, id.vars = "refseq")
+limit = rbind(plotting[as.character(plotting$Var1) %in% top_liver,], plotting[as.character(plotting$Var1) %in% bot_liver,])
+
+ggplot(limit, aes(value, color = Var1)) + 
+  geom_density() +
+  labs(title="Magnitude Density Curve: Top6 and Bottom6 Liver Proteins", x = "Correlation", y = "Density")
+
+```
+
+Using the same top and bottom proteins, the above graphs show the correlation from the bicor calculation. The curves that are wider at the bottom are the top proteins, indicating that the more significant proteins also have greater correlation coefficients. 
+
 NEXT: permute null distribution of Ssec; Calculate Ssec with cutoff; maybe figure out how to run Ssec on non-secreted proteins; null distribution of p-values?
 
 We permuted the target tissue strains and recalculated Ssec to
@@ -159,17 +218,26 @@ limit the influence of inflation of cross-tissue gene correlations
 used reflect a placeholder for the correlation coefficient, which
 does not require independence. 
 
-```{r}
-### This is no good
 
-brain.liv_p = brain.liv$p
+```{r, eval = FALSE}
 
-brain.liv_perm = apply(brain.liv_p, 2, sample, size = dim(brain.liv_p)[1], replace = F)
-rownames(brain.liv_perm) = as.character(1:dim(brain.liv_perm)[1])
+#permute strain names in target tissue array
+# bicor> pval> Ssec val
+# repeat 1000- compare observed value to mean of permuted values
+target_protein = protein_liver
+perm_test = matrix(NA, ncol = 1000, nrow = 174)
+perm_test = as.data.frame(perm_test)
+rownames(perm_test) = ts_Ssec_brain[,1]
 
-# calc Ssec
+for (i in 1:1000)
+{
+  
+perm = sample(rownames(target_protein), size = length(rownames(target_protein)), replace = FALSE)
+target_protein = target_protein[perm,]
 
-scores = rowSums(-log(brain.liv_perm))
+brain.liv = bicorAndPvalue(ts_protein_brain, target_protein, use = 'pairwise.complete.obs')
+
+scores = rowSums(-log(brain.liv$p))
 
 Ssec_brain_perm = data.frame(Gene_symbol = names(scores), score = scores) %>%
   #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
@@ -177,16 +245,18 @@ Ssec_brain_perm = data.frame(Gene_symbol = names(scores), score = scores) %>%
   dplyr::select(-score) %>%
   arrange(desc(Ssec))
 
-hist(Ssec_brain$Ssec)
-hist(Ssec_brain_perm$Ssec)
+perm_test[,i] = Ssec_brain_perm[,2]
+} 
 
+## i dont get how this works...
 
-```
-```{r}
+pee = perm_test[rownames(perm_test) == top_brain[2],]
+hist(as.numeric(pee))
+Ssec_brain[Ssec_brain$Gene_symbol == top_brain[2],]
+# ok all of the true values are inside the null distribution. Did i do something wrong??
 
-#permute strain names in target tissue array
-# bicor> pval> Ssec val
-# repeat 1000- compare observed value to mean of permuted values
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(perm_test, "Permutation_Seldin_Report.csv")
 
 ```
 
