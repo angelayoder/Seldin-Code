@@ -76,6 +76,34 @@ setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/D
 write.csv(ts_protein_brain, "TissueSpecific2_Protein_Brain.csv")
 write.csv(ts_protein_liver, "TissueSpecific2_Protein_Liver.csv")
 
+## Tissue Specific Non-Secreted
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+notsec_brain = read.csv("NotSecreted_Brain.csv")
+notsec_liver = read.csv("NotSecreted_Liver.csv")
+notsec_liver = fix.read.csv(notsec_liver)
+notsec_brain = fix.read.csv(notsec_brain)
+
+genes_brain = colnames(notsec_brain)
+genes_liver = colnames(notsec_liver)
+
+gee = genes_brain %in% genes_liver
+gee = gee == FALSE
+only_brain = genes_brain[gee]
+
+wee = genes_liver %in% genes_brain
+wee = wee == FALSE
+only_liver = genes_liver[wee]
+
+tsns_protein_brain = notsec_brain[, colnames(notsec_brain) %in% only_brain]
+tsns_protein_liver = notsec_liver[, colnames(notsec_liver) %in% only_liver]
+
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(tsns_protein_brain, "NSTissueSpecific_Protein_Brain.csv")
+write.csv(tsns_protein_liver, "NSTissueSpecific_Protein_Liver.csv")
+
+#sum(colnames(ts_protein_liver) %in% colnames(tsns_protein_liver))
+
 ```
 
 ```{r, echo = FALSE, message = FALSE}
