@@ -1,0 +1,429 @@
+---
+title: "Report for Uniprot-Identified Tissue-Specific Proteins"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Summarize the genes identified as tissue-specific by uniprot
+  a. Look at the criteria for tissue-specificity within uniprot
+2. Run Ssec code with these genes
+  a. Uniprot-identified Tissue-Specific and exclusive to the tissues
+  b. Uniprot-identified Tissue-Specific, without excluding those not exclusive to the tissues
+3. Determine the characteristics of those that are labeled as tissue-specific but are not exclusive to one tissue
+
+Here we are restricting our protein-coding RNA-seq data to those genes that are labeled as "tissue-specific" on the uniprot database. [Seldin method]. [Definition of tissue-specific on uniprot]. We will calculate Ssec scores for those labeled as tissue-specific on uniprot, comparing secreted to non-secreted. These will be labeled ts uniprot. Additionally, we will calculate these same scores for genes that are labeled tissue-specific AND are only found in the corresponding dataset (brain genes are not found in the liver dataset and vice versa). These will be labeled ts uniprot exclusive. 
+Seldin: The Ssec rankings were then filtered ensuring that genes were
+primarily expressed by the origin tissue. This was accomplished
+by manual inspection of each gene in multi-tissue expression
+panels available via BioGPS (Su et al., 2002; Wu et al., 2009) in
+both mouse and humans (representative examples using
+BioGPS arrays shown in Figure S3). Genes not detected in
+BioGPS arrays were investigated for tissue specificity using the
+UniProt literature query for ‘‘tissue specificity.’’
+This was done after calculation of Ssec matrices. Manual inspection of top genes
+For this particular test, it does not appear that they focused on tissue-specific genes at all. Solely focused on the categories secreted and nonsecreted.They tested this with QQPlots
+What are BioGPS Arrays?
+Would it be useful at all to look at individuals instead of strain means?
+
+## CHECK INF!!!
+Do I want to try full dataset as target?
+
+```{r echo=FALSE, message=FALSE}
+
+library(tidyverse)
+library(reshape2)
+library(WGCNA)
+#library(reshape)
+#library(ggplot2)
+
+# Data Input
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+protein_liver = read.csv("Liver_WGCNA.csv")
+protein_brain = read.csv("Brain_WGCNA.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+secreted_protein_liver = read.csv("Secreted_Liver.csv")
+notsecreted_protein_brain = read.csv("NotSecreted_Brain.csv")
+notsecreted_protein_liver = read.csv("NotSecreted_Liver.csv")
+brain_uniprot = read.csv("Brain_Uniprot.csv")
+liver_uniprot = read.csv("Liver_Uniprot.csv")
+#sec_annot = read.csv("Sec_Annotation.csv")
+#tissuespec_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
+#tissuespec_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
+#ts_protein_brain = read.csv("TissueSpecific2_Protein_Brain.csv")
+#ts_protein_liver = read.csv("TissueSpecific2_Protein_Liver.csv")
+#tsns_protein_brain = read.csv("NSTissueSpecific_Protein_Brain.csv")
+#tsns_protein_liver = read.csv("NSTissueSpecific_Protein_Liver.csv")
+
+uniprot.tissue = read.delim("uniprot-annotation_(type__tissue+specificity_)-filtered-organism_%--.tab")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+protein_liver = fix.read.csv(protein_liver)
+protein_brain = fix.read.csv(protein_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+secreted_protein_liver = fix.read.csv(secreted_protein_liver)
+notsecreted_protein_brain = fix.read.csv(notsecreted_protein_brain)
+notsecreted_protein_liver = fix.read.csv(notsecreted_protein_liver)
+#sec_annot = fix.read.csv(sec_annot)
+#tissuespec_protein_brain = fix.read.csv(tissuespec_protein_brain)
+#tissuespec_protein_liver = fix.read.csv(tissuespec_protein_liver)
+#ts_protein_brain = fix.read.csv(ts_protein_brain)
+#ts_protein_liver = fix.read.csv(ts_protein_liver)
+#tsns_protein_brain = fix.read.csv(tsns_protein_brain)
+#tsns_protein_liver = fix.read.csv(tsns_protein_liver)
+brain_uniprot = fix.read.csv(brain_uniprot)
+liver_uniprot = fix.read.csv(liver_uniprot)
+
+```
+
+Below is a table of the number of genes in the labeled categories. We can see the sample size go down dramatically with the conditioning on tissue exclusivity. The first Ssec score analysis below will be using the Secreted TS Uniprot Exclusive brain and liver datasets (the last two rows below). The second Ssec score analysis will be using the Secreted TS Uniprot brain and liver datasets (the fifth and sixth rows). 
+
+```{r, echo = FALSE}
+# find brain and liver tissue-specific
+
+these_brain = brain_uniprot$ensembl_gene_id[brain_uniprot$uniprot_gn_id %in% uniprot.tissue$Entry]
+these_liver = liver_uniprot$ensembl_gene_id[liver_uniprot$uniprot_gn_id %in% uniprot.tissue$Entry]
+
+ts_uni_protein_brain = protein_brain[, colnames(protein_brain) %in% these_brain]
+ts_uni_protein_liver = protein_liver[, colnames(protein_liver) %in% these_liver]
+
+tssec_uni_protein_brain = secreted_protein_brain[, colnames(secreted_protein_brain) %in% these_brain]
+tssec_uni_protein_liver = secreted_protein_liver[, colnames(secreted_protein_liver) %in% these_liver]
+
+`%!in%` <- Negate(`%in%`)
+
+tsns_uni_protein_brain = ts_uni_protein_brain[, colnames(ts_uni_protein_brain) %!in% colnames(tssec_uni_protein_brain)]
+tsns_uni_protein_liver = ts_uni_protein_liver[, colnames(ts_uni_protein_liver) %!in% colnames(tssec_uni_protein_liver)]
+
+# exclude the ones that are shared
+
+ts.ts_uni_protein_brain = ts_uni_protein_brain[, colnames(ts_uni_protein_brain) %!in% colnames(ts_uni_protein_liver)]
+ts.ts_uni_protein_liver = ts_uni_protein_liver[, colnames(ts_uni_protein_liver) %!in% colnames(ts_uni_protein_brain)]
+
+ts.tssec_uni_protein_brain = tssec_uni_protein_brain[, colnames(tssec_uni_protein_brain) %!in% colnames(tssec_uni_protein_liver)]
+ts.tssec_uni_protein_liver = tssec_uni_protein_liver[, colnames(tssec_uni_protein_liver) %!in% colnames(tssec_uni_protein_brain)]
+
+ts.tsns_uni_protein_brain = tsns_uni_protein_brain[, colnames(tsns_uni_protein_brain) %!in% colnames(tsns_uni_protein_liver)]
+ts.tsns_uni_protein_liver = tsns_uni_protein_liver[, colnames(tsns_uni_protein_liver) %!in% colnames(tsns_uni_protein_brain)]
+
+numgenes = c(dim(ts_uni_protein_brain)[2], dim(ts_uni_protein_liver)[2], dim(ts.ts_uni_protein_brain)[2], dim(ts.ts_uni_protein_liver)[2], dim(tssec_uni_protein_brain)[2], dim(tssec_uni_protein_liver)[2], dim(ts.tssec_uni_protein_brain)[2], dim(ts.tssec_uni_protein_liver)[2])
+
+names(numgenes) = c("TS Uniprot Brain", "TS Uniprot Liver", "TS Uniprot Exclusive Brain", "TS Uniprot Exclusive Liver", "Secreted TS Uniprot Brain", "Secreted TS Uniprot Liver", "Secreted TS Uniprot Exclusive Brain", "Secreted TS Uniprot Exclusive Liver")
+
+knitr::kable(numgenes, caption = "Number of Genes")
+
+```
+
+## Secreted TS Uniprot Exclusive
+
+The following analysis is comparing the Ssec distribution between secreted and non-secreted genes. The Wilcoxon-Mann-Whitney test shows a very significant difference in the liver dataset, though with the very small sample size of 8 genes, we cannot be sure of the accuracy of our calculations. The brain dataset continues to not be significantly different between secreted and non-secreted. 
+
+```{r, echo = FALSE}
+
+#### Secreted ####
+## BRAIN ##
+target_liver = ts.ts_uni_protein_liver
+
+brain.liv = bicorAndPvalue(ts.tssec_uni_protein_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+sec_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+top_brain = head(sec_Ssec_brain[,1])
+bot_brain = tail(sec_Ssec_brain[,1])
+
+
+## LIVER ##
+
+target_brain = ts.ts_uni_protein_brain
+
+liv.brain = bicorAndPvalue(ts.tssec_uni_protein_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain$p))
+
+sec_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+top_liver = head(sec_Ssec_liver[,1])
+bot_liver = tail(sec_Ssec_liver[,1])
+
+#### Not Secreted ####
+
+## BRAIN ##
+
+brain.liv.c = bicorAndPvalue(ts.tsns_uni_protein_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv.c$p))
+
+nsec_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+#top_brain = head(tsns_Ssec_brain[,1])
+#bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+liv.brain.c = bicorAndPvalue(ts.tsns_uni_protein_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain.c$p))
+
+nsec_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+#top_liver = head(ts_Ssec_liver[,1])
+#bot_liver = tail(ts_Ssec_liver[,1])
+
+####### Visualizations
+
+#Brain
+h1 = cbind(rep("Not Secreted brain", times = length(nsec_Ssec_brain$Ssec)), nsec_Ssec_brain$Ssec)
+h2 = cbind(rep("Secreted brain", times = length(sec_Ssec_brain$Ssec)), sec_Ssec_brain$Ssec)
+
+compare.b = rbind(h1, h2)
+colnames(compare.b) = c("trt", "val")
+compare.b = as.data.frame(compare.b)
+compare.b$trt = as.factor(compare.b$trt)
+compare.b$val = as.numeric(compare.b$val)
+
+
+ggplot(compare.b, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Brain Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+# Liver
+h1 = cbind(rep("Not Secreted liver", times = length(nsec_Ssec_liver$Ssec)), nsec_Ssec_liver$Ssec)
+h2 = cbind(rep("Secreted liver", times = length(sec_Ssec_liver$Ssec)), sec_Ssec_liver$Ssec)
+
+compare.l = rbind(h1, h2)
+colnames(compare.l) = c("trt", "val")
+compare.l = as.data.frame(compare.l)
+compare.l$trt = as.factor(compare.l$trt)
+compare.l$val = as.numeric(compare.l$val)
+
+
+ggplot(compare.l, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Liver Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+#brain
+
+wil.brain = coin::wilcox_test(val ~ trt, compare.b)
+wil.brain
+
+# liver
+
+wil.liver = coin::wilcox_test(val ~ trt, compare.l)
+wil.liver
+
+# :'(
+
+```
+
+## Secreted TS Uniprot 
+
+The following analysis is comparing the Ssec distribution between secreted and non-secreted genes. The Wilcoxon-Mann-Whitney test shows a highly significant difference between secreted and non-secreted for the liver dataset. The brain dataset, while not showing a significant p-value, is the closest to significance found in our analyses. 
+
+```{r, echo = FALSE}
+
+#### Secreted ####
+## BRAIN ##
+target_liver = ts_uni_protein_liver
+
+brain.liv = bicorAndPvalue(tssec_uni_protein_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+sec_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+top_brain = head(sec_Ssec_brain[,1])
+bot_brain = tail(sec_Ssec_brain[,1])
+
+
+## LIVER ##
+
+target_brain = ts_uni_protein_brain
+
+liv.brain = bicorAndPvalue(tssec_uni_protein_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain$p))
+
+sec_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+top_liver = head(sec_Ssec_liver[,1])
+bot_liver = tail(sec_Ssec_liver[,1])
+
+#### Not Secreted ####
+
+## BRAIN ##
+
+brain.liv.c = bicorAndPvalue(tsns_uni_protein_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv.c$p))
+
+nsec_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+#top_brain = head(tsns_Ssec_brain[,1])
+#bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+liv.brain.c = bicorAndPvalue(tsns_uni_protein_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain.c$p))
+
+nsec_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+#top_liver = head(ts_Ssec_liver[,1])
+#bot_liver = tail(ts_Ssec_liver[,1])
+
+####### Visualizations
+
+#Brain
+h1 = cbind(rep("Not Secreted brain", times = length(nsec_Ssec_brain$Ssec)), nsec_Ssec_brain$Ssec)
+h2 = cbind(rep("Secreted brain", times = length(sec_Ssec_brain$Ssec)), sec_Ssec_brain$Ssec)
+
+compare.b = rbind(h1, h2)
+colnames(compare.b) = c("trt", "val")
+compare.b = as.data.frame(compare.b)
+compare.b$trt = as.factor(compare.b$trt)
+compare.b$val = as.numeric(compare.b$val)
+
+
+ggplot(compare.b, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Brain Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+# Liver
+h1 = cbind(rep("Not Secreted liver", times = length(nsec_Ssec_liver$Ssec)), nsec_Ssec_liver$Ssec)
+h2 = cbind(rep("Secreted liver", times = length(sec_Ssec_liver$Ssec)), sec_Ssec_liver$Ssec)
+
+compare.l = rbind(h1, h2)
+colnames(compare.l) = c("trt", "val")
+compare.l = as.data.frame(compare.l)
+compare.l$trt = as.factor(compare.l$trt)
+compare.l$val = as.numeric(compare.l$val)
+
+
+ggplot(compare.l, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Liver Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+#brain
+
+wil.brain = coin::wilcox_test(val ~ trt, compare.b)
+wil.brain
+
+# liver
+
+wil.liver = coin::wilcox_test(val ~ trt, compare.l)
+wil.liver
+
+# :'(
+
+```
+
+## Looking
+
+```{r}
+
+`%!in%` <- Negate(`%in%`)
+
+not_ex_brain = colnames(ts_uni_protein_brain)[colnames(ts_uni_protein_brain) %!in% colnames(ts.ts_uni_protein_brain)]
+not_ex_liver = colnames(ts_uni_protein_liver)[colnames(ts_uni_protein_liver) %!in% colnames(ts.ts_uni_protein_liver)]
+
+# checking the reads of the genes in not_ex_brain in brain and liver (i did not code this incorrectly)
+not_ex_protein_brain = protein_brain[,colnames(protein_brain) %in% not_ex_brain]
+not_ex_protein_liver = protein_liver[,colnames(protein_liver) %in% not_ex_brain]
+
+#sum(colnames(not_ex_protein_brain) != colnames(not_ex_protein_liver))
+
+avg_reads_not_ex_brain = apply(not_ex_protein_brain, 2, mean)
+avg_reads_not_ex_liver = apply(not_ex_protein_liver, 2, mean)
+label = c(rep("brain", times = length(avg_reads_not_ex_brain)), rep("liver", times = length(avg_reads_not_ex_liver)))
+effort = cbind(label, c(avg_reads_not_ex_brain, avg_reads_not_ex_liver))
+colnames(effort) = c("trt", "val")
+effort = as.data.frame(effort)
+effort$trt = factor(effort$trt, levels = c("brain", "liver"))
+effort$val = as.numeric(effort$val)
+
+ggplot(effort, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title = "Average Reads of Brain and Liver Samples that are Tissue-Specific but NOT Exclusive to Brain/Liver", x = "Ssec", y = "Density")
+
+wil.effort = coin::wilcox_test(val ~ trt, effort)
+wil.effort
+
+```
+It seems that in the uniprot database, tissue-specicificity does not indicate that a protein is only found in a single tissue, rather that there is SOME KIND of specificity in where it is found. 
+
+ENSRNOG00000003732: from top_brain; "Detected in brain (at protein level)"
+ENSRNOG00000023337: from top_brain; "Expressed in the dorsal root ganglia"
+ENSRNOG00000018962: from top_brain; "Expressed in the ventricle and atrium of adult rats. Also detected in the lung, kidney, liver, skeletal muscle, stomach and urinary bladder. Not detected in brain, colon, testis, spleen or thymus. Overexpressed in the ventricles in the case of hypertension and hypertrophy." in the ensembl database, they say there is expression in brain with an expression score of 56.67, compared to 77.93 in the liver
+
+ENSRNOG00000002811: from the Secreted TS Uniprot Exclusive Brain dataset; "Expressed in olfactory bulb, cerebellum and neuronal layers in hippocampus."
+
+ENSRNOG00000050761: from the Secreted TS Uniprot Exclusive Liver dataset; "Expressed by the liver and secreted in plasma."
+
+ENSRNOG00000012196: from the Secreted TS Uniprot Liver dataset; "Highly expressed in brain, kidney and heart (PubMed:11328816). Expressed at lower level in other tissues such as liver (PubMed:11328816). Expressed in intestine, kidney and liver (at protein level) (PubMed:11328816, PubMed:11330410). Localizes in the epithelia of the jejunum and ileum (PubMed:11330410)."
+
+ENSRNOG00000020889: not exclusive but tissue specific brain; "Minor constituent of the mineralized matrix of bone. Detected in calvaria, rib cartilage, liver, kidney, spleen, brain, lung, skeletal and heart muscle with highest expression in calvaria and approximately half the amount in kidney, liver and brain."
