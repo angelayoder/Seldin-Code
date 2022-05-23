@@ -1,0 +1,296 @@
+---
+title: "Tissue-Exclusive Proteins Report"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Redo the flow chart for tissue exclusive proteins
+2. Do a full report of tissue exclusive proteins
+
+```{r, echo = FALSE, message = FALSE}
+# Packages
+library(tidyverse)
+
+# Data Input
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+protein_brain = read.csv("Brain_WGCNA.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+
+protein_liver = read.csv("Liver_WGCNA.csv")
+secreted_protein_liver = read.csv("Secreted_Liver.csv")
+
+fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
+fin.r.squared_liver = read.csv("R_Squared_Liver.csv")
+
+notsec_brain = read.csv("NotSecreted_Brain.csv")
+notsec_liver = read.csv("NotSecreted_Liver.csv")
+
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+protein_brain = fix.read.csv(protein_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+
+protein_liver = fix.read.csv(protein_liver)
+secreted_protein_liver = fix.read.csv(secreted_protein_liver)
+
+fin.r.squared_brain = fix.read.csv(fin.r.squared_brain)
+fin.r.squared_liver = fix.read.csv(fin.r.squared_liver)
+
+notsec_liver = fix.read.csv(notsec_liver)
+notsec_brain = fix.read.csv(notsec_brain)
+
+
+
+```
+
+```{r}
+# Tissue exclusive, secreted proteins
+`%!in%` <- Negate(`%in%`)
+
+te_names_brain = colnames(secreted_protein_brain) %!in% colnames(secreted_protein_liver)
+te.sec_protein_brain = secreted_protein_brain[, te_names_brain]
+
+te_names_liver = colnames(secreted_protein_liver) %!in% colnames(secreted_protein_brain)
+te.sec_protein_liver = secreted_protein_liver[, te_names_liver]
+
+# tissue exclusive, nonsecreted proteins
+
+te_names_brain = colnames(notsec_brain) %!in% colnames(notsec_liver)
+te.nsec_protein_brain = notsec_brain[, te_names_brain]
+
+te_names_liver = colnames(notsec_liver) %!in% colnames(notsec_brain)
+te.nsec_protein_liver = notsec_liver[, te_names_liver]
+
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+# OPTION 1
+
+# flow chart
+# https://towardsdatascience.com/r-visualizations-flow-charts-in-r-4cfa7f783872
+library(DiagrammeR)
+
+grViz(diagram = "digraph flowchart { 
+      node [fontname = Arial, shape = oval, color = Lavender, style = filled, cex = 40]
+      tab1 [label = '@@1', fontsize = 100]
+      tab2 [label = '@@2', fontsize = 100]
+      tab3 [label = '@@3', fontsize = 100]
+      tab4 [label = '@@4', fontsize = 100]
+      tab5 [label = '@@5', fontsize = 100]
+      tab6 [label = '@@6', fontsize = 100]
+      tab7 [label = '@@7', fontsize = 100]
+      tab8 [label = '@@8', fontsize = 100]
+      
+      edge[minlen = 4, penwidth = 8, arrowsize = 4]
+      tab1 -> tab2;
+      tab2 -> tab3;
+      tab3 -> tab4;
+      tab4 -> tab5;
+      tab5 -> tab6;
+      tab4 -> tab7;
+      tab7 -> tab8}
+      
+      [1]: 'Full Cleaned Data: B(132 individuals, 18,385 genes), L(132 individuals, 15,365 genes)'
+      [2]: 'Means of Strains: B(45 strains, 18,385 genes), L(45 strains, 15,365 genes)'
+      [3]: 'RI Strains Only: B(30, 18,385), L(30, 15,365)'
+      [4]: 'Protein-Coding Genes Only: B(30, 16,457), L(30, 14,109)'
+      [5]: 'Secreted Protein-Coding Genes: B(30, 657), L(30, 818)'
+      [6]: 'Tissue-Exclusive Secreted Protein-Coding Genes: B(30, 174), L(30, 35)'
+      [7]: 'Non-Secreted Protein-Coding Genes: B(30, 15,800), L(30, 13,591)'
+      [8]: 'Tissue-Exclusive Non-Secreted Protein-Coding Genes: B(30, 2,589), L(30, 371)' 
+      ", width = 1000, height = 400)
+
+```
+
+Labels are of the format Tissue dataset (number of strains, number of genes), unless otherwise specified. B indicates the brain dataset, while L indicates the liver dataset. The full cleaned data came in the form number of RNA reads per individual rat. The strain means of the reads were calculated by averaging the RNA reads per gene for all rats within a strain. The resulting dataset had data for 45 strains. Classically inbred strains were removed from the dataset, leaving only recombinant inbred strains, for which we have phenotype data. Then, all non-protein coding-genes were removed, as identified by _.   MORE
+
+```{r}
+
+# OPTION 2
+
+# flow chart
+# https://towardsdatascience.com/r-visualizations-flow-charts-in-r-4cfa7f783872
+library(DiagrammeR)
+
+grViz(diagram = "digraph flowchart { 
+      node [fontname = Arial, shape = oval, color = Lavender, style = filled]
+      tab1 [label = '@@1', fontsize = 100]
+      tab2 [label = '@@2', fontsize = 100]
+      tab3 [label = '@@3', fontsize = 100]
+      tab4 [label = '@@4', fontsize = 100]
+      tab5 [label = '@@5', fontsize = 100]
+      tab6 [label = '@@6', fontsize = 100]
+
+      
+      edge[minlen = 4, penwidth = 8, arrowsize = 4]
+      tab1 -> tab2;
+      tab2 -> tab3;
+      tab3 -> tab4;
+      tab2 -> tab5;
+      tab5 -> tab6;
+}
+      
+      [1]: 'All RNA Reads: B(18,385 genes), L(15,365 genes)'
+      [2]: 'Protein-Coding Genes Only: B(16,457), L(14,109)'
+      [3]: 'Secreted Protein-Coding Genes: B(657), L(818)'
+      [4]: 'Tissue-Exclusive Secreted Protein-Coding Genes: B(174), L(35)'
+      [5]: 'Non-Secreted Protein-Coding Genes: B(15,800), L(13,591)'
+      [6]: 'Tissue-Exclusive Non-Secreted Protein-Coding Genes: B(2,589), L(371)' 
+      ", width = 1000, height = 400)
+
+
+
+
+```
+
+```{r}
+
+library(Gmisc)
+library(glue)
+library(htmlTable)
+library(grid)
+library(magrittr)
+```
+
+```{r}
+
+# https://cran.r-project.org/web/packages/Gmisc/vignettes/Grid-based_flowcharts.html
+
+grid.newpage()
+txt1 <-
+"Full Cleaned Data
+Brain (132 ind, 18,385 genes)
+Liver (132 ind, 15,365 genes)"
+boxFC = boxGrob(txt1, x = 0.15, y = .89)
+txt2 = 
+  "Means of Strains
+Brain (45 strains, 18,385 genes)
+Liver (45 strains, 15,365 genes)"
+boxMS = boxGrob(txt2, x = 0.15, y = 0.65)
+txt3 = 
+  "RI Strains Only
+Brain (30 strains, 18,385 genes)
+Liver (30 strains, 15,365 genes)"
+boxRI = boxGrob(txt3, x = 0.15, y = 0.40)
+txt4 = 
+  "Protein-Coding Genes Only
+Brain (30 strains, 16,457 genes)
+Liver (30 strains, 14,109 genes)"
+boxPC = boxGrob(txt4, x = 0.15, y = 0.15)
+txt5 = 
+  "Secreted Protein-Coding Genes
+Brain (30 strains, 657 genes)
+Liver (30 strains, 818 genes)"
+boxSe = boxGrob(txt5, x = 0.5, y = 0.89)
+txt6 = 
+  "Tissue-Exclusive Secreted 
+  Protein-Coding Genes
+Brain (30 strains, 174 genes)
+Liver (30 strains, 35 genes)"
+boxTES = boxGrob(txt6, x = 0.5, y = 0.65)
+txt7 = 
+  "Non-Secreted Protein-Coding Genes
+Brain (30 strains, 15,800 genes)
+Liver (30 strains, 13,591 genes)"
+boxNSe = boxGrob(txt7, x = 0.5, y = 0.40)
+txt8 = 
+  "Tissue-Exclusive Non-Secreted 
+  Protein-Coding Genes
+Brain (30 strains, 2,589 genes)
+Liver (30 strains, 371 genes)"
+boxTENS = boxGrob(txt8, x = 0.5, y = 0.13)
+
+connectGrob(boxFC, boxMS, "vertical")
+connectGrob(boxMS, boxRI, "vertical")
+connectGrob(boxRI, boxPC, "vertical")
+connectGrob(boxPC, boxSe, "Z", "r")
+connectGrob(boxSe, boxTES, "vertical")
+connectGrob(boxPC, boxNSe, "Z", "r")
+connectGrob(boxNSe, boxTENS, "vertical")
+
+boxFC
+boxMS
+boxRI
+boxPC
+boxSe
+boxTES
+boxNSe
+boxTENS
+
+
+
+
+```
+
+```{r}
+
+grid.newpage()
+txt1 =
+"All Normalized Expression Values
+Brain (18,385 genes)
+Liver (15,365 genes)"
+boxAR = boxGrob(txt1, x = 0.15, y = 0.5)
+txt4 = 
+  "Protein-Coding Genes Only
+Brain (16,457 genes)
+Liver (14,109 genes)"
+boxPC = boxGrob(txt4, x = 0.35, y = 0.5)
+txt5 = 
+  "Secreted Protein-Coding Genes
+Brain (657 genes)
+Liver (818 genes)"
+boxSe = boxGrob(txt5, x = 0.35, y = 0.70)
+txt6 = 
+  "Tissue-Exclusive, Secreted 
+  Protein-Coding Genes
+Brain (174 genes)
+Liver (35 genes)"
+boxTES = boxGrob(txt6, x = 0.55, y = 0.70)
+txt7 = 
+  "Non-Secreted Protein-Coding Genes
+Brain (15,800 genes)
+Liver (13,591 genes)"
+boxNSe = boxGrob(txt7, x = 0.35, y = 0.30)
+txt8 = 
+  "Tissue-Exclusive, Non-Secreted 
+  Protein-Coding Genes
+Brain (2,589 genes)
+Liver (371 genes)"
+boxTENS = boxGrob(txt8, x = 0.55, y = 0.30)
+txt9 = 
+  "Tissue-Exclusive 
+  Protein-Coding Genes
+Brain (2,751 genes)
+Liver (405 genes)"
+boxTE = boxGrob(txt8, x = 0.55, y = 0.5)
+
+connectGrob(boxAR, boxPC, "horizontal")
+connectGrob(boxPC, boxSe, "vertical")
+connectGrob(boxSe, boxTES, "horizontal")
+connectGrob(boxPC, boxNSe, "vertical")
+connectGrob(boxNSe, boxTENS, "horizontal")
+connectGrob(boxPC, boxTE, "horizontal")
+
+boxAR
+boxPC
+boxSe
+boxTES
+boxNSe
+boxTENS
+boxTE
+
+
+
+
+```

@@ -11,6 +11,8 @@ date: "`r Sys.Date()`"
   b. Find distribution of correlation p-values
   c. Find a null distribution of Ssec values
   
+THIS WAS DONE WITH TISSUE EXCLUSIVE GENES
+  
 ```{r echo=FALSE, message=FALSE}
 
 library(tidyverse)
@@ -30,8 +32,8 @@ secreted_protein_liver = read.csv("Secreted_Liver.csv")
 notsecreted_protein_brain = read.csv("NotSecreted_Brain.csv")
 notsecreted_protein_liver = read.csv("NotSecreted_Liver.csv")
 sec_annot = read.csv("Sec_Annotation.csv")
-tissuespec_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
-tissuespec_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
+#tissuespec_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
+#tissuespec_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
 ts_protein_brain = read.csv("TissueSpecific2_Protein_Brain.csv")
 ts_protein_liver = read.csv("TissueSpecific2_Protein_Liver.csv")
 tsns_protein_brain = read.csv("NSTissueSpecific_Protein_Brain.csv")
@@ -52,8 +54,8 @@ secreted_protein_liver = fix.read.csv(secreted_protein_liver)
 notsecreted_protein_brain = fix.read.csv(notsecreted_protein_brain)
 notsecreted_protein_liver = fix.read.csv(notsecreted_protein_liver)
 sec_annot = fix.read.csv(sec_annot)
-tissuespec_protein_brain = fix.read.csv(tissuespec_protein_brain)
-tissuespec_protein_liver = fix.read.csv(tissuespec_protein_liver)
+#tissuespec_protein_brain = fix.read.csv(tissuespec_protein_brain)
+#tissuespec_protein_liver = fix.read.csv(tissuespec_protein_liver)
 ts_protein_brain = fix.read.csv(ts_protein_brain)
 ts_protein_liver = fix.read.csv(ts_protein_liver)
 tsns_protein_brain = fix.read.csv(tsns_protein_brain)
@@ -106,7 +108,7 @@ top_liver = head(ts_Ssec_liver[,1])
 bot_liver = tail(ts_Ssec_liver[,1])
 
 #### TSNS ####
-# ns tissue-specific -> ns tissue-specific
+# ns tissue-specific -> full
 ## BRAIN ##
 
 brain.liv = bicorAndPvalue(tsns_protein_brain, protein_liver, use = 'pairwise.complete.obs')
@@ -166,6 +168,9 @@ ggplot(compare, aes(val, color = trt)) +
   geom_density() +
   labs(title="Brain Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
 
+with(compare, qqplot(val[trt == "TSNS brain"], val[trt == "TSS brain"]))
+abline(a = 0, b = 1)
+
 # Liver
 h1 = cbind(rep("TSNS liver", times = length(tsns_Ssec_liver$Ssec)), tsns_Ssec_liver$Ssec)
 h2 = cbind(rep("TSS liver", times = length(ts_Ssec_liver$Ssec)), ts_Ssec_liver$Ssec)
@@ -180,6 +185,9 @@ compare$val = as.numeric(compare$val)
 ggplot(compare, aes(val, color = trt)) + 
   geom_density() +
   labs(title="Liver Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+with(compare, qqplot(val[trt == "TSNS liver"], val[trt == "TSS liver"]))
+abline(a = 0, b = 1)
 
 ```
 
@@ -266,6 +274,14 @@ tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
 #top_liver = head(ts_Ssec_liver[,1])
 #bot_liver = tail(ts_Ssec_liver[,1])
 
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
+write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")
+write.csv(tsns_Ssec_brain, "Target_TENSec_Ssec_brain.csv")
+write.csv(tsns_Ssec_liver, "Target_TENSec_Ssec_liver.csv")
+
+
 ```
 
 
@@ -290,6 +306,9 @@ ggplot(compare.b, aes(val, color = trt)) +
   geom_density() +
   labs(title="Brain Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
 
+with(compare.b, qqplot(val[trt == "TSNS brain"], val[trt == "TSS brain"]))
+abline(a = 0, b = 1)
+
 # Liver
 h1 = cbind(rep("TSNS liver", times = length(tsns_Ssec_liver$Ssec)), tsns_Ssec_liver$Ssec)
 h2 = cbind(rep("TSS liver", times = length(ts_Ssec_liver$Ssec)), ts_Ssec_liver$Ssec)
@@ -304,6 +323,9 @@ compare.l$val = as.numeric(compare.l$val)
 ggplot(compare.l, aes(val, color = trt)) + 
   geom_density() +
   labs(title="Liver Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+with(compare.l, qqplot(val[trt == "TSNS liver"], val[trt == "TSS liver"]))
+abline(a = 0, b = 1)
 
 ```
 
@@ -593,6 +615,9 @@ ggplot(compare.b, aes(val, color = trt)) +
   geom_density() +
   labs(title="Brain Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
 
+with(compare.b, qqplot(val[trt == "Not Secreted brain"], val[trt == "Secreted brain"]))
+abline(a = 0, b = 1)
+
 # Liver
 h1 = cbind(rep("Not Secreted liver", times = length(nsec_Ssec_liver$Ssec)), nsec_Ssec_liver$Ssec)
 h2 = cbind(rep("Secreted liver", times = length(sec_Ssec_liver$Ssec)), sec_Ssec_liver$Ssec)
@@ -607,6 +632,9 @@ compare.l$val = as.numeric(compare.l$val)
 ggplot(compare.l, aes(val, color = trt)) + 
   geom_density() +
   labs(title="Liver Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
+
+with(compare.l, qqplot(val[trt == "Not Secreted liver"], val[trt == "Secreted liver"]))
+abline(a = 0, b = 1)
 
 #brain
 
@@ -644,5 +672,33 @@ sample(secreted_protein_liver, size = 4, replace = FALSE)
 
 # ENSRNOG00000058444: nucleus, chromosome, secreted
 # ENSRNOG00000048642: same
+
+```
+
+```{r}
+
+# QQ plot
+
+sec = ts_Ssec_brain$Ssec
+nsec = tsns_Ssec_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"]))
+abline(a = 0, b = 1)
 
 ```

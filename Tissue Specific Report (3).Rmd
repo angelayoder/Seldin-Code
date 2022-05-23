@@ -1,0 +1,241 @@
+---
+title: "Report for Tissue-Specific Proteins"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Report results of tissue-specific proteins data
+  a. Flow chart of data reduction
+  b. Create tissue exclusive datasets (sec/nonsec)
+  c. Data summary
+  d. Compare heritability between tissue-exclusive secreted and tissue-exclusive non-secreted
+
+The ensembl rat liver and brain RNAseq data was produced by our lab from tissues imported from the Czech Academy of Sciences laboratory. Inbred strains were excluded, leaving only recombinant inbred strains. The means across strains were calculated for the RNA expression data. Annontation data was retrieved from BiomaRt (version number 2.48.0), which was used to exclude non-protein-coding genes from the data set. This resulted in a dataset of 30 strains and 16,457 genes for brain tissue, and 30 strains and 14,109 genes for liver tissue. 
+
+From there, our datasets were segregated by terms "secreted" and "tissue-specific." Results for protein-coding genes were filtered by species "Rattus norvegicus" and subcellular location "secreted" from the uniprot database (accessed 2021). The uniprot IDs from the new secreted dataset were compared to the converted uniprot IDs (via biomaRt) of the brain and liver tissue datasets. Tissue-specific status was determined by finding the genes in the brain and liver datasets were exclusive to those datasets (only found in the brain dataset OR the liver dataset). From this we created our dataset of investigation: tissue-specific secreted gene datasets for liver (with 35 genes) and brain (with 174 genes) tissues. This dataset was compared to a comparable dataset of tissue-specific non-secreted genes, with 368 liver genes and 2,577 brain genes.  
+
+The following report was completed using `r R.Version()$version.string`. Additionally, the packages WGCNA (version 1.70.3), broom (version 0.7.7), tidyverse (version `r packageVersion("tidyverse")`), and knitr (version `r packageVersion("knitr")`). 
+
+```{r, echo = FALSE, message = FALSE}
+# Packages
+library(tidyverse)
+
+# Data Input
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+protein_brain = read.csv("Brain_WGCNA.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+
+protein_liver = read.csv("Liver_WGCNA.csv")
+secreted_protein_liver = read.csv("Secreted_Liver.csv")
+
+fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
+fin.r.squared_liver = read.csv("R_Squared_Liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+protein_brain = fix.read.csv(protein_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+
+protein_liver = fix.read.csv(protein_liver)
+secreted_protein_liver = fix.read.csv(secreted_protein_liver)
+
+fin.r.squared_brain = fix.read.csv(fin.r.squared_brain)
+fin.r.squared_liver = fix.read.csv(fin.r.squared_liver)
+
+
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+
+# flow chart
+# https://towardsdatascience.com/r-visualizations-flow-charts-in-r-4cfa7f783872
+library(DiagrammeR)
+
+grViz(diagram = "digraph flowchart { 
+      node [fontname = Arial, shape = oval, color = Lavender, style = filled]
+      tab1 [label = '@@1', fontsize = 100]
+      tab2 [label = '@@2', fontsize = 100]
+      tab3 [label = '@@3', fontsize = 100]
+      tab4 [label = '@@4', fontsize = 100]
+      tab5 [label = '@@5', fontsize = 100]
+      tab6 [label = '@@6', fontsize = 100]
+      tab7 [label = '@@7', fontsize = 100]
+      tab8 [label = '@@8', fontsize = 100]
+      
+      edge[minlen = 4, penwidth = 8, arrowsize = 4]
+      tab1 -> tab2;
+      tab2 -> tab3;
+      tab3 -> tab4;
+      tab4 -> tab5;
+      tab5 -> tab6;
+      tab4 -> tab7;
+      tab7 -> tab8}
+      
+      [1]: 'Full Cleaned Data: Brain (132 individuals, 18,385 genes), Liver (132 individuals, 15,365 genes)'
+      [2]: 'Means of Strains: Brain (45 strains, 18,385 genes), Liver (45 strains, 15,365 genes)'
+      [3]: 'RI Strains Only: Brain (30 strains, 18,385 genes), Liver (30 strains, 15,365 genes)'
+      [4]: 'Protein-Coding Genes Only: Brain (30 strains, 16,457 genes), Liver (30 strains, 14,109 genes)'
+      [5]: 'Secreted Protein-Coding Genes: B(30, 657), L(30, 818)'
+      [6]: 'Tissue-Specific Secreted Protein-Coding Genes: B(30, 174), L(30, 35)'
+      [7]: 'Non-Secreted Protein-Coding Genes: B(30, 15,800), L(30, 13,591)'
+      [8]: 'Tissue-Specific Non-Secreted Protein-Coding Genes: B(30, 2,577), L(30, 368)' 
+      ", width = 1000, height = 400)
+
+```
+
+
+
+```{r, echo = FALSE, message = FALSE}
+# looking for unique genes
+
+genes_brain = colnames(secreted_protein_brain)
+genes_liver = colnames(secreted_protein_liver)
+
+gee = genes_brain %in% genes_liver
+gee = gee == FALSE
+only_brain = genes_brain[gee]
+
+wee = genes_liver %in% genes_brain
+wee = wee == FALSE
+only_liver = genes_liver[wee]
+
+ts_protein_brain = secreted_protein_brain[, colnames(secreted_protein_brain) %in% only_brain]
+ts_protein_liver = secreted_protein_liver[, colnames(secreted_protein_liver) %in% only_liver]
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#write.csv(ts_protein_brain, "TissueSpecific2_Protein_Brain.csv")
+#write.csv(ts_protein_liver, "TissueSpecific2_Protein_Liver.csv")
+
+## Tissue Specific Non-Secreted
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+notsec_brain = read.csv("NotSecreted_Brain.csv")
+notsec_liver = read.csv("NotSecreted_Liver.csv")
+notsec_liver = fix.read.csv(notsec_liver)
+notsec_brain = fix.read.csv(notsec_brain)
+
+genes_brain = colnames(notsec_brain)
+genes_liver = colnames(notsec_liver)
+
+gee = genes_brain %in% genes_liver
+gee = gee == FALSE
+only_brain = genes_brain[gee]
+
+wee = genes_liver %in% genes_brain
+wee = wee == FALSE
+only_liver = genes_liver[wee]
+
+tsns_protein_brain = notsec_brain[, colnames(notsec_brain) %in% only_brain]
+tsns_protein_liver = notsec_liver[, colnames(notsec_liver) %in% only_liver]
+
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#write.csv(tsns_protein_brain, "NSTissueSpecific_Protein_Brain.csv")
+#write.csv(tsns_protein_liver, "NSTissueSpecific_Protein_Liver.csv")
+
+#sum(colnames(ts_protein_liver) %in% colnames(tsns_protein_liver))
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+# table comparing number of genes
+ngenes = ncol(protein_brain)
+ngenes_tsns = ncol(tsns_protein_brain)
+ngenes_ts = ncol(ts_protein_brain)
+
+ngenes.l = ncol(protein_liver)
+ngenes_tsns.l = ncol(tsns_protein_liver)
+ngenes_ts.l = ncol(ts_protein_liver)
+tot_tsns = ngenes_tsns + ngenes_tsns.l # from secreted uniprot data
+tot_ts = ngenes_ts + ngenes_ts.l
+
+num = c(ngenes, ngenes_tsns, ngenes_ts, ngenes.l, ngenes_tsns.l, ngenes_ts.l, tot_tsns, tot_ts)
+
+names(num) = c("Brain: Full Data", "Brain: Tissue-Specific Non-Secreted Data", "Brain: Tissue-Specific Secreted Data", "Liver: Full Data", "Liver: Tissue-Specific Non-Secreted Data", "Liver: Tissue-Specific Secreted Data", "Total Tissue-Specific Non-Secreted Rat Genes", "Total Tissue-Specific Secreted Rat Genes")
+
+knitr::kable(num, col.names = "Number of Ensembl Genes")
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+# R squared
+
+rsq.brain = sub(" ~ strain_factor_brain.*", "", fin.r.squared_brain$names_brain)
+rsq.liver = sub(" ~ strain_factor_liver.*", "", fin.r.squared_liver$names_liver)
+
+fin.r.squared_brain[,1] = rsq.brain
+fin.r.squared_liver[,1] = rsq.liver
+
+r.squared_brain_ts = fin.r.squared_brain[fin.r.squared_brain$names_brain %in% colnames(ts_protein_brain),]
+r.squared_liver_ts = fin.r.squared_liver[fin.r.squared_liver$names_liver %in% colnames(ts_protein_liver),]
+
+r.squared_brain_tsns = fin.r.squared_brain[fin.r.squared_brain$names_brain %in% colnames(tsns_protein_brain),]
+r.squared_liver_tsns = fin.r.squared_liver[fin.r.squared_liver$names_liver %in% colnames(tsns_protein_liver),]
+
+#brain
+
+gee = cbind(rep("Tissue-Specific Non-Secreted", times = dim(r.squared_brain_tsns)[1]), r.squared_brain_tsns[,2])
+gee2 = cbind(rep("Tissue-Specific Secreted", times = dim(r.squared_brain_ts)[1]), r.squared_brain_ts[,2])
+
+wil.b = rbind(gee, gee2)
+wil.b = as.data.frame(wil.b)
+colnames(wil.b) = c("Dataset", "r.sq")
+
+wil.b$Dataset = as.factor(wil.b$Dataset)
+wil.b$r.sq = as.numeric(wil.b$r.sq)
+
+wil.brain = coin::wilcox_test(r.sq ~ Dataset, wil.b)
+
+# liver
+
+gee = cbind(rep("Tissue-Specific Non-Secreted", times = dim(r.squared_brain_tsns)[1]), r.squared_brain_tsns[,2])
+gee2 = cbind(rep("Tissue-Specific Secreted", times = dim(r.squared_liver_ts)[1]), r.squared_liver_ts[,2])
+
+wil.l = rbind(gee, gee2)
+wil.l = as.data.frame(wil.l)
+colnames(wil.l) = c("Dataset", "r.sq")
+
+wil.l$Dataset = as.factor(wil.l$Dataset)
+wil.l$r.sq = as.numeric(wil.l$r.sq)
+
+wil.liver = coin::wilcox_test(r.sq ~ Dataset, wil.l)
+
+```
+
+The R-squared density curves for the brain data below show similar peaks. The curves for the liver data indicate a greater right skew in the tissue-specific proteins. For both sets of data, the distinction is not as clear as the secreted proteins dataset, likely due to small sample size. 
+
+```{r, echo = FALSE, message = FALSE}
+
+# Density R Squared
+
+ggplot(wil.b, aes(x = r.sq, color = Dataset)) + 
+  geom_density() +
+  labs(title ="Broad Sense Heritability Density Curve: Brain",x = "R Squared", y = "Density")
+
+ggplot(wil.l, aes(x = r.sq, color = Dataset)) + 
+  geom_density() +
+  labs(title ="Broad Sense Heritability Density Curve: Liver",x = "R Squared", y = "Density")
+
+# Box R Squared
+
+boxplot(r.squared_brain_tsns[,2], r.squared_brain_ts[,2], names = c("Brain-Specific Non-Secreted", "Brain-Specific Secreted"), main = "Broad Sense Heritability: Brain", ylab = "R Squared")
+boxplot(r.squared_liver_tsns[,2], r.squared_liver_ts[,2], names = c("Liver-Specific Non-Secreted", "Liver-Specific Secreted"), main = "Broad Sense Heritability: Liver", ylab = "R Squared")
+
+
+```
+
+We tested whether the heritability of the Tissue-Specific Non-Secreted and Tissue-Specific Secreted datasets were significantly different using the Wilcoxon-Mann-Whitney Test. Only the liver dataset showed a significant difference betweeen the R Squared of the two groups. The test comparing the Brain-Specific Non-Secreted and Brain-Specific Secreted resulted in a p-value of `r round(coin::pvalue(wil.brain), 2)`. The test comparing the Liver-Specific Non-Secreted and Liver-Specific Secreted resulted in a p-value of `r format(coin::pvalue(wil.liver), scientific = TRUE, digits = 3)`.  
+
+

@@ -1,0 +1,368 @@
+---
+title: "Summary Statistics"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Create tables and graphics of summary statistics for Thesis Proposal
+
+```{r, echo = FALSE, message = FALSE}
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data")
+pheno = read.csv("Pheno_rQTL.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+pheno = fix.read.csv(pheno)
+
+#libraries
+
+library(tidyverse)
+
+```
+## Phenotypes ##
+```{r, echo = FALSE}
+# Phenotypes
+
+clear = as.data.frame(cbind(rownames(pheno), as.numeric(pheno$ClearanceEtOH)))
+clear$V2 = as.numeric(clear$V2)
+clear = clear[order(clear$V2),]
+clear$V2 = round(clear$V2, digits = 8)
+clear$V1 = factor(clear$V1, levels = clear$V1)
+
+auc = as.data.frame(cbind(rownames(pheno), as.numeric(pheno$meanauc2gkg)))
+auc$V2 = as.numeric(auc$V2)
+auc = auc[order(auc$V2),]
+#auc$V2 = round(auc$V2, digits = 8)
+auc$V1 = factor(auc$V1, levels = auc$V1)
+```
+
+
+```{r, echo = FALSE}
+
+# boxplot for phenotype Alcohol Clearance
+
+#caption_clear = str_wrap("The rate of alcohol clearance of each strain, averaged over multiple replicates, for recombinant-inbred HXB/BXH rat strains. Individuals were injected with 2 g/kg ethanol, and blood samples were taken at multiple intervals to track blood alcohol concentration. Broad Sense Heritability for this phenotype was calculated (81%).")
+
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#pdf(file = "Barplot_Pheno_Clear.pdf", width = 12, height = 7)
+
+# error bars
+# http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
+
+ggplot(data = clear, aes(x = V1, y = V2)) +
+  geom_bar(stat = "identity", fill = "green4") +
+  theme_minimal() +
+  xlab("Strain") + 
+  ylab("Alcohol Clearance (mL/min/kg)") +
+  theme(text = element_text(size = 20), 
+        plot.title = element_text(size = 45, face="bold", margin = margin(10, 0, 10, 0)),
+        axis.text.x = element_text(angle = 90)) +
+  theme_minimal() 
+
+#dev.off()
+```
+
+The rate of alcohol clearance of each strain, averaged over multiple replicates, for recombinant-inbred HXB/BXH rat strains. Individuals were injected with 2 g/kg ethanol, and blood samples were taken at multiple intervals to track blood alcohol concentration. Broad Sense Heritability for this phenotype was calculated (81%).
+
+```{r, echo = FALSE}
+
+# boxplot for phenotype Acetate AUC
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+pdf(file = "Barplot_Pheno_AUC.pdf", width = 12, height = 7)
+
+caption_auc = str_wrap("The averaged total area under the curve of the plot of blood acetate concentration over time of each strain for recombinant-inbred HXB/BXH rat strains. Individuals were injected with 2 g/kg ethanol, and blood samples were taken at multiple intervals to track blood acetate concentration. Broad Sense Heritability for this phenotype was calculated (66%).")
+
+ggplot(data = auc, aes(x = V1, y = V2)) +
+  geom_bar(stat = "identity", fill = "green4") +
+  theme_minimal() +
+  xlab("Strain") + 
+  ylab("Acetate AUC from 0 to 400 minutes (mM*min)") +
+  theme(text = element_text(size = 20), 
+        plot.title = element_text(size = 45, face="bold", margin = margin(10, 0, 10, 0)),
+        axis.text.x = element_text(angle = 90))
+
+dev.off()
+
+```
+
+The averaged total area under the curve of the plot of blood acetate concentration over time of each strain for recombinant-inbred HXB/BXH rat strains. Individuals were injected with 2 g/kg ethanol, and blood samples were taken at multiple intervals to track blood acetate concentration. Broad Sense Heritability for this phenotype was calculated (66%).
+
+## Broad Sense Heritability ##
+
+
+```{r, echo = FALSE}
+# Sec/NonSec code taken from "Secreted Proteins Report.1.Rmd"
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
+fin.r.squared_brain_sec = read.csv("R_Squared_Brain_Sec.csv")
+fin.r.squared_liver = read.csv("R_Squared_Liver.csv")
+fin.r.squared_liver_sec = read.csv("R_Squared_Liver_Sec.csv")
+fin.r.squared_brain_notsec = read.csv("R_Squared_Brain_NotSec.csv")
+fin.r.squared_liver_notsec = read.csv("R_Squared_Liver_NotSec.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+fin.r.squared_brain = fix.read.csv(fin.r.squared_brain)
+fin.r.squared_brain_sec = fix.read.csv(fin.r.squared_brain_sec)
+fin.r.squared_liver = fix.read.csv(fin.r.squared_liver)
+fin.r.squared_liver_sec = fix.read.csv(fin.r.squared_liver_sec)
+fin.r.squared_brain_notsec = fix.read.csv(fin.r.squared_brain_notsec)
+fin.r.squared_liver_notsec = fix.read.csv(fin.r.squared_liver_notsec)
+
+```
+
+```{r, echo = FALSE}
+
+# Data Frame Creation
+gee = cbind(rep("not secreted", times = dim(fin.r.squared_brain_notsec)[1]), fin.r.squared_brain_notsec[,2])
+gee2 = cbind(rep("secreted", times = dim(fin.r.squared_brain_sec)[1]), fin.r.squared_brain_sec[,2])
+
+wil.b = rbind(gee, gee2)
+wil.b = as.data.frame(wil.b)
+colnames(wil.b) = c("trt", "r.sq")
+
+wil.b$trt = as.factor(wil.b$trt)
+wil.b$r.sq = as.numeric(wil.b$r.sq)
+
+gee = cbind(rep("not secreted", times = dim(fin.r.squared_liver_notsec)[1]), fin.r.squared_liver_notsec[,2])
+gee2 = cbind(rep("secreted", times = dim(fin.r.squared_liver_sec)[1]), fin.r.squared_liver_sec[,2])
+
+wil.l = rbind(gee, gee2)
+wil.l = as.data.frame(wil.l)
+colnames(wil.l) = c("trt", "r.sq")
+
+wil.l$trt = as.factor(wil.l$trt)
+wil.l$r.sq = as.numeric(wil.l$r.sq)
+
+# ttest
+
+ttest_brain = t.test(r.sq ~ trt, data = wil.b)
+ttest_liver = t.test(r.sq ~ trt, data = wil.l)
+
+```
+
+```{r, echo = FALSE}
+
+## Plot BSH Density Curves
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data")
+pdf(file = "BSH_brain.pdf", width = 12, height = 7)
+
+ggplot(wil.b, aes(x = r.sq, color = trt)) + 
+  geom_density(size = 2) + 
+  labs(x ="R Squared", y = "Density") +
+  scale_color_manual(values = c("green4", "lawngreen"), name  ="",
+                            breaks=c("secreted", "not secreted"),
+                            labels=c("Secreted: 657 genes", "Non-Secreted: 15,800 genes")) +
+  theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "gray87"), legend.position = "top", text = element_text(size = 20))
+
+dev.off()
+```
+
+CAPTION
+
+```{r, echo = FALSE}
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data")
+pdf(file = "BSH_liver.pdf", width = 12, height = 7)
+
+
+ggplot(wil.l, aes(x = r.sq, color = trt)) + 
+  geom_density(size = 2) + 
+  labs(x ="R Squared", y = "Density") +
+  scale_color_manual(values = c("green4", "lawngreen"), name  ="",
+                            breaks=c("secreted", "not secreted"),
+                            labels=c("Secreted: 818 genes", "Non-Secreted: 13,519 genes")) +
+  theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "gray87"), legend.position = "top", text = element_text(size = 20))
+
+dev.off()
+
+```
+
+CAPTION
+
+
+
+```{r, echo = FALSE}
+# TE Sec/NonSec code taken from "Tissue Specific Report.Rmd"
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+te.sec_brain = read.csv("TE.Secreted_Protein_Brain.csv")
+te.sec_liver = read.csv("TE.Secreted_Protein_Liver.csv")
+te.nsec_brain = read.csv("TE.NotSecreted_Protein_Brain.csv")
+te.nsec_liver = read.csv("TE.NotSecreted_Protein_Liver.csv")
+
+te.sec_brain = fix.read.csv(te.sec_brain)
+te.sec_liver = fix.read.csv(te.sec_liver)
+te.nsec_brain = fix.read.csv(te.nsec_brain)
+te.nsec_liver = fix.read.csv(te.nsec_liver)
+
+```
+
+```{r, echo = FALSE}
+# R squared for TE datasets
+
+rsq.brain = sub(" ~ strain_factor_brain.*", "", fin.r.squared_brain$names_brain)
+rsq.liver = sub(" ~ strain_factor_liver.*", "", fin.r.squared_liver$names_liver)
+
+fin.r.squared_brain[,1] = rsq.brain
+fin.r.squared_liver[,1] = rsq.liver
+
+r.squared_brain_tesec = fin.r.squared_brain[fin.r.squared_brain$names_brain %in% colnames(te.sec_brain),]
+r.squared_liver_tesec = fin.r.squared_liver[fin.r.squared_liver$names_liver %in% colnames(te.sec_liver),]
+
+r.squared_brain_tens = fin.r.squared_brain[fin.r.squared_brain$names_brain %in% colnames(te.nsec_brain),]
+r.squared_liver_tens = fin.r.squared_liver[fin.r.squared_liver$names_liver %in% colnames(te.nsec_liver),]
+
+## Data Frame Creation
+#brain
+
+gee = cbind(rep("Tissue-Exclusive Non-Secreted", times = dim(r.squared_brain_tens)[1]), r.squared_brain_tens[,2])
+gee2 = cbind(rep("Tissue-Exclusive Secreted", times = dim(r.squared_brain_tesec)[1]), r.squared_brain_tesec[,2])
+
+wil.b_te = rbind(gee, gee2)
+wil.b_te = as.data.frame(wil.b_te)
+colnames(wil.b_te) = c("Dataset", "r.sq")
+
+wil.b_te$Dataset = as.factor(wil.b_te$Dataset)
+wil.b_te$r.sq = as.numeric(wil.b_te$r.sq)
+
+
+# liver
+
+gee = cbind(rep("Tissue-Exclusive Non-Secreted", times = dim(r.squared_brain_tens)[1]), r.squared_brain_tens[,2])
+gee2 = cbind(rep("Tissue-Exclusive Secreted", times = dim(r.squared_liver_tesec)[1]), r.squared_liver_tesec[,2])
+
+wil.l_te = rbind(gee, gee2)
+wil.l_te = as.data.frame(wil.l_te)
+colnames(wil.l_te) = c("Dataset", "r.sq")
+
+wil.l_te$Dataset = as.factor(wil.l_te$Dataset)
+wil.l_te$r.sq = as.numeric(wil.l_te$r.sq)
+
+# ttest
+
+ttest_tebrain = t.test(r.sq ~ Dataset, data = wil.b_te)
+ttest_teliver = t.test(r.sq ~ Dataset, data = wil.l_te)
+
+ttest_compbrain = t.test(wil.b_te$r.sq, wil.b$r.sq)
+
+
+```
+
+```{r, echo = FALSE}
+# Plot BSH density curves
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+pdf(file = "BSH_te_brain.pdf", width = 12, height = 7)
+
+ggplot(wil.b_te, aes(x = r.sq, color = Dataset)) + 
+  geom_density(size = 2) + 
+  labs(x ="R Squared", y = "Density") +
+  scale_color_manual(values = c("green4", "lawngreen"), name  ="",
+                            breaks=c("Tissue-Exclusive Secreted", "Tissue-Exclusive Non-Secreted"),
+                            labels=c("Tissue-Exclusive Secreted: 174 genes", "Tissue-Exclusive Non-Secreted: 2,589 genes")) +
+  theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "gray87"), legend.position = "top", text = element_text(size = 20))
+
+
+dev.off()
+
+```
+
+caption
+
+```{r, echo = FALSE}
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+pdf(file = "BSH_te_liver.pdf", width = 12, height = 7)
+
+ggplot(wil.l_te, aes(x = r.sq, color = Dataset)) + 
+  geom_density(size = 2) + 
+  labs(x ="R Squared", y = "Density") +
+  scale_color_manual(values = c("green4", "lawngreen"), name  ="",
+                            breaks=c("Tissue-Exclusive Secreted", "Tissue-Exclusive Non-Secreted"),
+                            labels=c("Tissue-Exclusive Secreted: 35 genes", "Tissue-Exclusive Non-Secreted: 371 genes")) +
+  theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "gray87"), legend.position = "top", text = element_text(size = 20))
+
+
+dev.off()
+
+```
+
+caption
+
+## Ssec Scores
+
+```{r}
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+tesec_brain = read.csv("TE.Sec_Ssec_brain.csv")
+tesec_liver = read.csv("TE.Sec_Ssec_liver.csv")
+tensec_brain = read.csv("TE.NSec_Ssec_brain.csv")
+tensec_liver = read.csv("TE.NSec_Ssec_liver.csv")
+
+tesec_brain = fix.read.csv(tesec_brain)
+tesec_liver = fix.read.csv(tesec_liver)
+tensec_brain = fix.read.csv(tensec_brain)
+tensec_liver = fix.read.csv(tensec_liver)
+
+
+```
+
+```{r}
+
+plot_brain = data.frame(class = c(rep("Tissue-Exclusive Secreted", times = dim(tesec_brain)[1]), rep("Tissue-Exclusive Non-Secreted", times = dim(tensec_brain)[1])), Ssec = c(tesec_brain[,2], tensec_brain[,2]))
+
+plot_liver = data.frame(class = c(rep("Tissue-Exclusive Secreted", times = dim(tesec_liver)[1]), rep("Tissue-Exclusive Non-Secreted", times = dim(tensec_liver)[1])), Ssec = c(tesec_liver[,2], tensec_liver[,2]))
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+pdf(file = "Ssec_te_brain.pdf", width = 12, height = 7)
+
+ggplot(plot_brain, aes(x = Ssec, color = class)) +
+  geom_histogram(fill = "white") +
+  scale_color_manual(values = c("green4", "lawngreen"), name  ="",
+                            breaks=c("Tissue-Exclusive Secreted", "Tissue-Exclusive Non-Secreted")) +
+  labs(title ="Ssec Values: Brain",x="Ssec Value", y = "", subtitle = "Tissue-Exclusive Secreted v. Tissue-Exclusive Non-Secreted") +
+  theme_minimal()
+
+dev.off()
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+pdf(file = "Ssec_te_liver.pdf", width = 12, height = 7)
+
+ggplot(plot_liver, aes(x = Ssec, color = class)) +
+  geom_histogram(fill = "white") +
+  scale_color_manual(values = c("green4", "lawngreen"), name  ="",
+                            breaks=c("Tissue-Exclusive Secreted", "Tissue-Exclusive Non-Secreted")) +
+  labs(title ="Ssec Values: Liver",x="Ssec Value", y = "", subtitle = "Tissue-Exclusive Secreted v. Tissue-Exclusive Non-Secreted") +
+  theme_minimal()
+
+dev.off()
+
+
+```
+
+$$ Accuracy = 1 - \frac{|P - O|}  {O} $$
