@@ -1,0 +1,42 @@
+---
+title: "EnrichR Report"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Determine if Enrichr is a valid replacement for EGSEA for gene set analysis
+2. If yes, summarize results of Enrichr
+
+```{r, echo = FALSE, message = FALSE}
+
+# https://cran.r-project.org/web/packages/enrichR/vignettes/enrichR.html
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+
+# top 5 TES genes for brain and liver
+# the genes theyre correlated to
+# convert to gene names
+
+```
+
+
+```{r, echo = FALSE}
+library(enrichR)
+
+setEnrichrSite("Enrichr") # human genes???
+dbs = c("GO_Molecular_Function_2018", "GO_Cellular_Component_2018", "GO_Biological_Process_2018")
+
+enriched = enrichr(sec_Ssec_brain[1:100,], dbs)
+
+enriched
+
+
+```
+
+
+
+MSigDB
+https://cran.r-project.org/web/packages/msigdbr/vignettes/msigdbr-intro.html
+https://bioinformaticsbreakdown.com/how-to-gsea/
