@@ -1,0 +1,225 @@
+---
+title: "Data Visualizations for HRDP RNA Data from the Brain and Liver"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Range of genes in histogram
+2. Strain means via RLE
+3. Broad Sense Heritability
+4. Hierarchical Clustering Plot
+5. PCA plot
+
+
+```{r, echo = FALSE}
+# Data Import
+
+# set working directory
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+
+# download brain and liver datasets
+brain = read.csv("PhenoGen.HRDP.v5.totalRNA.Brain.gene.ensembl96.txt", header = T, sep = "\t")
+liver = read.csv("PhenoGen.HRDP.v5.totalRNA.Liver.gene.ensembl96.txt", header = T, sep = "\t")
+
+# download strain means dataset
+storagematrix_brain = read.csv("Means_strainXgene_brain.csv")
+storagematrix_liver = read.csv("Means_strainXgene_liver.csv")
+
+# download BSH vectors
+fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
+fin.r.squared_liver = read.csv("R_Squared_Liver.csv")
+
+# download RLE matrices
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+RLE_brain = read.csv("RLE_Brain.csv")
+RLE_liver = read.csv("RLE_Liver.csv")
+RLE_brain = RLE_brain[,2:dim(RLE_brain)[2]]
+RLE_liver = RLE_liver[,2:dim(RLE_liver)[2]]
+```
+
+### Range Histograms
+
+The following are histograms of the range of values for each of the datasets. We can see in the first two graphs that there are some pretty extreme outliers in each of the datasets. The brain dataset shows values greater than 15, and the liver dataset shows values greater than 80. The zoomed in histograms are controlled by x-axis and bar width. We can see that the values are generally concentrated at the lower end with a right skew. Brain appears to have greater concentration at the lower end than liver. It seems there is more variability in the liver dataset. 
+
+```{r, echo = FALSE}
+
+# Range of Genes
+
+# distribution of gene ranges
+range_brain = numeric(dim(brain)[1])
+for (i in 1:dim(brain)[1])
+{
+  r = range(brain[i,])
+  m = r[2] - r[1]
+  range_brain[i] = m
+}
+
+range_liver = numeric(dim(liver)[1])
+for (i in 1:dim(liver)[1])
+{
+  r = range(liver[i,])
+  m = r[2] - r[1]
+  range_liver[i] = m
+}
+
+hist(range_brain, main = "Range by Gene: Brain", xlab = "Range")
+hist(range_liver, main = "Range by Gene: Liver", xlab = "Range")
+
+hist(range_brain, main = "Range by Gene: Brain, Zoom", xlab = "Range", xlim = range(0:15))
+hist(range_liver, main = "Range by Gene: Liver, Zoom", xlab = "Range", xlim = range(0:15), breaks = 80)
+
+boxplot(range_brain, main = "Range by Gene: Brain, Zoom", ylim = range(0:10))
+boxplot(range_liver, main = "Range by Gene: Liver, Zoom", ylim = range(0:10))
+
+```
+
+### RLE Plots
+
+Below are the Relative Log Odds plots for the brain and liver data, including zoomed plots. We can see that with a couple exceptions in the liver data, the data is pretty evenly distributed around 0. Should I identify the outliers in the liver dataset?
+
+```{r, echo = FALSE}
+
+# RLE
+
+boxplot(x = t(RLE_brain), main = "RLE plot: Brain dataset", xlab = "Strain")
+boxplot(x = t(RLE_liver), main = "RLE plot: Liver dataset", xlab = "Strain")
+
+boxplot(x = t(RLE_brain), main = "RLE plot: Brain dataset ZOOM", xlab = "Strain", ylim = range(-5:5))
+boxplot(x = t(RLE_liver), main = "RLE plot: Liver dataset ZOOM", xlab = "Strain", ylim = range(-5:5)) 
+
+```
+
+### Broad Sense Heritability
+
+The Broad Sense Heritability for the brain and liver datasets is very similar to each other and close to normally distributed. 
+
+```{r, echo = FALSE}
+
+#Broad Sense Heritability
+
+hist(as.numeric(fin.r.squared_brain[,3]), main = "Broad Sense Heritability: Brain", xlab = "R-Squared Value")
+hist(as.numeric(fin.r.squared_liver[,3]), main = "Broad Sense Heritability: Liver", xlab = "R-Squared Value")
+```
+
+### Hierarchical Clustering
+
+Below we have Hierarchical Clustering Dendrograms that are color coded by strain, batch, and recombinant v. inbred. For the dendrogram coded by batch, we can see some clusters of similar colors, but not complete separation. For recombinant v. inbred, there is significant clustering, as expected. 
+
+```{r, echo = FALSE, message = FALSE}
+library(WGCNA)
+ 
+#Hierarchical Clustering
+
+for_clustering_brain = as.dist(1 - abs(cor(x = brain, method = "spearman")))
+for_clustering_liver = as.dist(1 - abs(cor(x = liver, method = "spearman")))
+
+h_clustering_brain = hclust(for_clustering_brain)
+h_clustering_liver = hclust(for_clustering_liver)
+
+# By Strain
+
+rats_brain = sub("_.*", "", colnames(brain))
+rats_liver = sub("_.*", "", colnames(liver))
+
+color_brain = labels2colors(rats_brain)
+color_liver = labels2colors(rats_liver)
+
+#plotDendroAndColors(h_clustering_brain, color_brain, main = "Brain by Strain", cex.dendroLabels = 0.4)
+#plotDendroAndColors(h_clustering_liver, color_liver, main = "Liver by Strain", cex.dendroLabels = 0.4)
+
+# By Batch
+
+batch_brain = as.numeric(sub(".*batch", "", colnames(brain)))
+batch_liver = as.numeric(sub(".*batch", "", colnames(liver)))
+
+color_batch_brain = labels2colors(batch_brain)
+color_batch_liver = labels2colors(batch_liver)
+
+#plotDendroAndColors(h_clustering_brain, color_batch_brain, main = "Brain by Batch")
+#plotDendroAndColors(h_clustering_liver, color_batch_liver, main = "Liver by Batch")
+
+# By Recombinant v. Inbred
+
+hxb_brain = grep("HXB", colnames(brain))
+bxh_brain = grep("BXH", colnames(brain))
+recombinant_brain = sort(c(hxb_brain,bxh_brain))
+recomblog_brain = 1:length(colnames(brain))
+recomblog_brain[recombinant_brain] = 0
+recomblog_brain = as.logical(recomblog_brain)
+
+hxb_liver = grep("HXB", colnames(liver))
+bxh_liver = grep("BXH", colnames(liver))
+recombinant_liver = sort(c(hxb_liver,bxh_liver))
+recomblog_liver = 1:length(colnames(liver))
+recomblog_liver[recombinant_liver] = 0
+recomblog_liver = as.logical(recomblog_liver)
+
+color_recomb_brain = labels2colors(recomblog_brain)
+color_recomb_liver = labels2colors(recomblog_liver)
+
+totcolors_brain = cbind(color_brain, color_batch_brain, color_recomb_brain)
+colnames(totcolors_brain) = c("Strain", "Batch", "Recombinant v. Inbred")
+totcolors_liver = cbind(color_liver, color_batch_liver, color_recomb_liver)
+colnames(totcolors_liver) = c("Strain", "Batch", "Recombinant v. Inbred")
+
+plotDendroAndColors(h_clustering_brain, colors = totcolors_brain, main = "Brain", cex.dendroLabels = 0.4)
+plotDendroAndColors(h_clustering_liver, colors = totcolors_liver, main = "Liver", cex.dendroLabels = 0.4)
+
+```
+
+### PCA Plot
+
+Here we have the PCA plots, coded by recombinant v. inbred and batch. Again, there is pretty distinct separation of color for the recombinant v. inbred, as expected. Batch is somewhat unreadable
+
+```{r, echo = FALSE}
+
+# PCA Plot
+
+# PCA
+library(PCAtools)
+
+pca_brain <- pca(brain, center=TRUE, scale=TRUE)
+pca_liver = pca(liver, center = TRUE, scale = TRUE)
+
+#biplot(pca_brain)
+#biplot(pca_liver)
+
+# by recombinant v. inbred
+
+mat = matrix(recomblog_brain, nrow = length(recomblog_brain), ncol = 1)
+rownames(mat) = colnames(brain)
+colnames(mat) = c("col")
+
+mat2 = matrix(recomblog_liver, nrow = length(recomblog_liver), ncol = 1)
+rownames(mat2) = colnames(liver)
+colnames(mat2) = c("col")
+
+pca_brain = pca(brain, meta = mat, center=TRUE, scale=TRUE)
+pca_liver = pca(liver, meta = mat2, center = TRUE, scale = TRUE)
+
+biplot(pca_brain, colby = "col", title = "Brain by Recombinant v. Inbred", lab = NULL)
+biplot(pca_liver, colby = "col", title = "Liver by Recombinant v. Inbred", lab = NULL)
+
+# by batch
+color_pca_batchbrain = labels2colors(batch_brain)
+mat = matrix(color_pca_batchbrain, nrow = length(batch_brain), ncol = 1)
+rownames(mat) = colnames(brain)
+colnames(mat) = c("col")
+
+
+color_pca_batchliver = labels2colors(batch_liver)
+mat2 = matrix(color_pca_batchliver, nrow = length(batch_liver), ncol = 1)
+rownames(mat2) = colnames(liver)
+colnames(mat2) = c("col")
+
+pca_brain = pca(brain, meta = mat, center=TRUE, scale=TRUE)
+pca_liver = pca(liver, meta = mat2, center = TRUE, scale = TRUE)
+
+
+
+biplot(pca_brain, colby = "col", title = "Brain by Batch", lab = NULL)
+biplot(pca_liver, colby = "col", title = "Liver by Batch", lab = NULL)
+```
+

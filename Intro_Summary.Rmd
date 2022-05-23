@@ -1,0 +1,242 @@
+# Data Summary of HRDP RNA Data from the Brain and Liver
+## Angela Yoder
+
+Goals: Download Phenogen HRDP total RNA ensemble data for Brain and Liver and complete a data summary
+
+
+```{r, echo = FALSE}
+# set working directory
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+# download brain and liver datasets
+brain = read.csv("PhenoGen.HRDP.v5.totalRNA.Brain.gene.ensembl96.txt", header = T, sep = "\t")
+liver = read.csv("PhenoGen.HRDP.v5.totalRNA.Liver.gene.ensembl96.txt", header = T, sep = "\t")
+
+# number of samples
+numsamples_brain = ncol(brain)
+numsamples_liver = ncol(liver)
+```
+
+The brain dataset contains `r numsamples_brain` samples. The liver dataset contains `r numsamples_liver` samples.
+
+```{r, echo = FALSE}
+
+# number of strains
+
+  # extracting strain from colname
+rats_brain = sub("_.*", "", colnames(brain))
+rats_liver = sub("_.*", "", colnames(liver))
+
+  # counting unique strains
+numstrains_brain = length(unique(rats_brain))
+numstrains_liver = length(unique(rats_liver))
+
+# number of rats in each strain
+
+tbl_brain = table(rats_brain)
+tbl_liver = table(rats_liver)
+
+# avg number of rats in each strain
+
+avgsample_brain = mean(tbl_brain)
+avgsample_liver = mean(tbl_liver)
+
+ex.avgsample_brain = format(round(avgsample_brain, 2), nsmall = 2)
+ex.avgsample_liver = format(round(avgsample_liver, 2), nsmall = 2)
+
+```
+
+There are `r numstrains_brain` strains of rat in the brain dataset, and `r numstrains_liver` in the liver dataset.
+There are an average of `r ex.avgsample_brain` samples per strain in the brain dataset, and `r ex.avgsample_liver` in the liver dataset.
+
+```{r, echo = FALSE}
+
+# num genes in each dataset
+
+numgene_brain = nrow(brain)
+numgene_liver = nrow(liver)
+
+# number of overlapping genes between datasets
+
+genes_brain = rownames(brain)
+genes_liver = rownames(liver)
+
+overlap = match(genes_brain, genes_liver)
+
+overlap = na.omit(overlap)
+numoverlap = length(overlap)
+
+ex.numgene_brain = formatC(numgene_brain, big.mark = ",")
+ex.numgene_liver = formatC(numgene_liver, big.mark = ",")
+ex.numoverlap = formatC(numoverlap, big.mark = ",")
+
+```
+
+There are `r ex.numgene_brain` genes in the brain dataset, and `r ex.numgene_liver` genes in the liver dataset.
+There are `r ex.numoverlap` genes that are shared between the two datasets. 
+
+```{r, echo = FALSE}
+
+# distribution of gene ranges
+range_ay = function(x)
+{
+  r = range(x)
+  m = r[2] - r[1]
+  out = 2^m
+  return(out)
+}
+
+range_brain = apply(brain, 1, range_ay)
+range_liver = apply(liver, 1, range_ay)
+
+#range_brain = numeric(dim(brain)[1])
+#for (i in 1:dim(brain)[1])
+#{
+#  r = range(brain[i,])
+#  m = r[2] - r[1]
+#  range_brain[i] = 2^m
+#}
+
+#range_liver = numeric(dim(liver)[1])
+#for (i in 1:dim(liver)[1])
+#{                                                   
+#  r = range(liver[i,])
+#  m = r[2] - r[1]
+#  range_liver[i] = 2^m
+#}
+
+meanrange_liver = mean(range_liver)
+meanrange_brain = mean(range_brain)
+
+### testing ###
+ #liver[which.max(range_liver), grep('LEW', colnames(liver))]
+ 
+ outlier_liver = which(range_liver > 32)
+ outlier_brain = which(range_brain > 32)
+ 
+ #find rat names that have outliers
+ beep = lapply(brain[outlier_brain,], which.max)
+ beepbeep = names(beep)
+ #table(beepbeep) All the rats have outliers
+ choo = lapply(liver[outlier_liver,], which.max)
+ choochoo = names(choo)
+ #table(choochoo) All the rats have outliers
+ 
+ #liver[as.numeric(choo), grep('ACI', colnames(liver))]
+ #brain[as.numeric(beep), grep("SS.JrHsd", colnames(brain))]
+ 
+ #double checking outlier ranges
+ max_liver = as.numeric(lapply(liver[outlier_liver,], max))
+ min_liver = as.numeric(lapply(liver[outlier_liver,], min))
+ checking_liver = max_liver - min_liver
+ 
+ max_brain = as.numeric(lapply(brain[outlier_brain,], max))
+ min_brain = as.numeric(lapply(brain[outlier_brain,], min))
+ checking_brain = max_brain - min_brain
+ 
+# find the largest values for range
+sort_range_liver = sort(range_liver)
+sort_range_brain = sort(range_brain)
+
+# pull out outliers from liver ranges
+outliers = tail(sort_range_liver, n = 3)
+
+# logical vector to weed out outliers
+outlier_logical_liver = range_liver > 32
+outlier_logical_brain = range_brain > 32
+
+# find indices and names of genes that are outliers
+index = c()
+name = c()
+count = 1
+for (i in outlier_logical_liver)
+{
+  if (i == 0)
+  {
+    index = c(index, count)
+    name = c(name, rownames(liver[count,]))
+  }
+  count = count + 1
+}
+
+
+
+
+# summ is number of values < 5 per bad genes
+# geene is the index of the rats that have the values that are too high
+new_outlier_liver = liver < 5
+
+#geene = c()
+#for (i in index)
+#{
+#  for (j in 1:length(new_outlier_liver[i,]))
+#  {
+#    if (new_outlier_liver[i,j] == 0)
+#    {
+#      geene = c(geene, j)
+#    }
+#  }
+#}
+
+summ = apply(new_outlier_liver[index,], 1, sum)
+#apply(new_outlier_liver[index,], 2, grep, pattern = 0)
+#apply(new_outlier_liver[index,], 2, )
+
+# max_rat is the maximum value for each rat
+#max_rat = c()
+#max_index = c()
+#numrats = length(liver[1,])
+#numgenes = length(liver[,1])
+#for (i in 1:numrats)
+#{
+#  max_rat = c(max_rat, max(liver[,i]))
+#  for (j in 1: numgenes)
+#  {
+#    if (liver[j,i] == max(liver[,i]))
+#    {
+#      max_index = c(max_index, j)
+#    }
+#  }
+#}
+
+max_rat = apply(liver, 2, max)
+
+#max_gene is the max value for each gene
+#max_gene = c()
+#for (i in 1: numgenes)
+#{
+#  max_gene = c(max_gene, max(liver[i,]))
+#}
+
+
+
+max_gene = apply(liver, 1, max)
+
+log_max_gene = max_gene > 15
+
+
+# find proportion of range vectors that are outliers
+prop_outlier_brain = sum(outlier_logical_brain) - length(outlier_logical_brain)
+prop_outlier_liver = sum(outlier_logical_liver) - length(outlier_logical_liver)
+
+# create new vectors with outliers removed with logical vector from before
+new_range_liver = outlier_logical_liver * range_liver
+new_range_brain = outlier_logical_brain * range_brain
+
+# histograms of new vectors
+hist(new_range_brain[new_range_brain != 0], main = "Range of Genes with Outliers Excluded, Brain", xlab = "Range")
+hist(new_range_liver[new_range_liver != 0], main = "Range of Genes with Outliers Excluded, Liver", xlab = "Range")
+```
+
+outliers greater than 32 (2^5). There were 191 outliers from the brain dataset 228 outliers in the liver dataset
+
+
+The average range of reads per gene for the brain dataset is `r meanrange_brain` and `r meanrange_liver` for the liver dataset. Above are this histograms for ranges of reads per gene.
+
+```{r, echo = FALSE}
+
+#hist(range_liver, main = "Range of Number of Reads for RNA found in the Liver", xlab = "Number of Reads")
+#hist(range_brain, main = "Range of Number of Reads for RNA found in the Brain", xlab = "Number of Reads")
+
+```

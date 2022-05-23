@@ -1,0 +1,407 @@
+---
+title: "Seldin Report: Ssec QQ Plots"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Calculate Ssec scores for Secreted and Non-Secreted proteins v. full datasets
+  a. Plot Ssec scores in a QQ plot
+2. Calculate Ssec scores for Tissue-Exclusive Secreted and Tissue-Exclusive Non-Secreted proteins v. full datasets
+  b. Plot Ssec scores in a QQ plot
+
+Following the procedure laid out in Seldin, we are comparing secreted proteins to non-secreted proteins from the origin tissue, without the designation of tissue-specific. This was compared to the full protein-coding dataset for the target tissue.
+
+### Secreted v. Non-Secreted
+
+```{r, echo = FALSE, message = FALSE}
+
+library(tidyverse)
+library(reshape2)
+library(WGCNA)
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+sec_Ssec_brain = read.csv("Sec-Full-Ssec_brain.csv")
+sec_Ssec_liver = read.csv("Sec-Full-Ssec_liver.csv")
+nsec_Ssec_brain = read.csv("NSec-Full-Ssec_brain.csv")
+nsec_Ssec_liver = read.csv("NSec-Full-Ssec_liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+sec_Ssec_brain = fix.read.csv(sec_Ssec_brain)
+sec_Ssec_liver = fix.read.csv(sec_Ssec_liver)
+nsec_Ssec_brain = fix.read.csv(nsec_Ssec_brain)
+nsec_Ssec_liver = fix.read.csv(nsec_Ssec_liver)
+```
+
+Below are the QQ plots for the Ssec values comparing secreted to non-secreted. Ideally, Ssec values would have higher values in secreted proteins, showing that the Ssec measure was quantifying communication between tissues. However, the graphs show the opposite, with non-secreted proteins having higher correlations to the target tissue proteins than the secreted proteins.  
+
+```{r, echo = FALSE}
+
+## BRAIN
+
+sec = sec_Ssec_brain$Ssec
+nsec = nsec_Ssec_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = sec_Ssec_liver$Ssec
+nsec = nsec_Ssec_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
+abline(a = 0, b = 1)
+
+```
+
+We can confirm by looking at the maximum values for each designation.
+
+```{r, echo = FALSE}
+
+top_sec_brain = head(sec_Ssec_brain)
+top_nsec_brain = head(nsec_Ssec_brain)
+top_sec_liver = head(sec_Ssec_liver)
+top_nsec_liver = head(nsec_Ssec_liver)
+
+out = rbind(top_sec_brain$Ssec, top_nsec_brain$Ssec, top_sec_liver$Ssec, top_nsec_liver$Ssec)
+rownames(out) = c("Secreted Brain", "Non-Secreted Brain", "Secreted Liver", "Non-Secreted Liver")
+
+knitr::kable(out, caption = "Top Ssec Scores by Category")
+
+```
+
+### Tissue-Exclusive Secreted v. Tissue-Exclusive Non-Secreted
+
+Below is the same procedure, but with only RNA sequences that are exclusive to the tissue of interest. Liver appears to favor secreted proteins a bit more, albeit with a much lower sample size. Brain, however, still favors non-secreted protein associations. We can try to repeat this procedure, changing target genes to also be tissue-exclusive, instead of all protein-coding genes.  
+
+```{r, echo = FALSE}
+
+`%!in%` <- Negate(`%in%`)
+
+te.sec_Ssec_brain = sec_Ssec_brain[sec_Ssec_brain$Gene_symbol %!in% sec_Ssec_liver$Gene_symbol,]
+te.sec_Ssec_liver = sec_Ssec_liver[sec_Ssec_liver$Gene_symbol %!in% sec_Ssec_brain$Gene_symbol,]
+te.nsec_Ssec_brain = nsec_Ssec_brain[nsec_Ssec_brain$Gene_symbol %!in% nsec_Ssec_liver$Gene_symbol,]
+te.nsec_Ssec_liver = nsec_Ssec_liver[nsec_Ssec_liver$Gene_symbol %!in% nsec_Ssec_brain$Gene_symbol,]
+
+
+## BRAIN
+
+sec = te.sec_Ssec_brain$Ssec
+nsec = te.nsec_Ssec_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Tissue-Exclusive Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = te.sec_Ssec_liver$Ssec
+nsec = te.nsec_Ssec_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Tissue-Exclusive Liver Proteins"))
+abline(a = 0, b = 1)
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+
+# server code for sec TE v. nsec TE
+
+#### Secreted ####
+## BRAIN ##
+te.sec_brain = protein_brain[, colnames(protein_brain) %in% rownames(te.sec_Ssec_brain)]
+target_liver = protein_liver
+
+brain.liv = bicorAndPvalue(te.sec_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+sec_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+top_brain = head(sec_Ssec_brain[,1])
+bot_brain = tail(sec_Ssec_brain[,1])
+
+
+## LIVER ##
+
+target_brain = protein_brain
+te.sec_liver = protein_liver[, colnames(protein_liver) %in% rownames(te.sec_Ssec_liver)]
+
+liv.brain = bicorAndPvalue(te.sec_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain$p))
+
+sec_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+top_liver = head(sec_Ssec_liver[,1])
+bot_liver = tail(sec_Ssec_liver[,1])
+
+#### Not Secreted ####
+
+## BRAIN ##
+te.nsec_brain = protein_brain[, colnames(protein_brain) %in% rownames(te.nsec_Ssec_brain)]
+
+brain.liv.c = bicorAndPvalue(te.nsec_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv.c$p))
+
+nsec_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+#top_brain = head(tsns_Ssec_brain[,1])
+#bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+te.nsec_liver = protein_liver[, colnames(protein_liver) %in% rownames(te.nsec_Ssec_liver)]
+
+liv.brain.c = bicorAndPvalue(te.nsec_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain.c$p))
+
+nsec_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+# double checking
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+te.sec_Ssec_brain = read.csv("TE.Sec_Ssec_brain.csv")
+te.sec_Ssec_liver = read.csv("TE.Sec_Ssec_liver.csv")
+te.nsec_Ssec_brain = read.csv("TE.NSec_Ssec_brain.csv")
+te.nsec_Ssec_liver = read.csv("TE.NSec_Ssec_liver.csv")
+
+te.sec_Ssec_brain = fix.read.csv(te.sec_Ssec_brain)
+te.sec_Ssec_liver = fix.read.csv(te.sec_Ssec_liver)
+te.nsec_Ssec_brain = fix.read.csv(te.nsec_Ssec_brain)
+te.nsec_Ssec_liver = fix.read.csv(te.nsec_Ssec_liver)
+
+## BRAIN
+
+sec = te.sec_Ssec_brain$Ssec
+nsec = te.nsec_Ssec_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Tissue-Exclusive Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = te.sec_Ssec_liver$Ssec
+nsec = te.nsec_Ssec_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Tissue-Exclusive Liver Proteins"))
+abline(a = 0, b = 1)
+
+
+```
+
+```{r}
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+associate_brain = read.csv("Associations_Brain.csv")
+associate_liver = read.csv("Associations_Liver.csv")
+
+top_brain = head(te.sec_Ssec_brain[,1])
+bot_brain = tail(te.sec_Ssec_brain[,1])
+
+assoc_top_brain = associate_brain[associate_brain$Var1 %in% top_brain,]
+top_assoc_top_brain = assoc_top_brain[assoc_top_brain$value < 0.05,]
+one = top_assoc_top_brain[top_assoc_top_brain$Var1 == top_brain[1],]
+
+top_liver = head(te.sec_Ssec_liver[,1])
+bot_liver = tail(te.sec_Ssec_liver[,1])
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(one, "OneSecretedProtein_LessThan5Per.csv")
+
+```
+
+### checking target shit
+
+```{r, echo = FALSE}
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+ts_Ssec_target_brain = read.csv("Target_TESec_Ssec_brain.csv")
+ts_Ssec_target_liver = read.csv("Target_TESec_Ssec_liver.csv")
+tsns_Ssec_target_brain = read.csv("Target_TENSec_Ssec_brain.csv")
+tsns_Ssec_target_liver = read.csv("Target_TENSec_Ssec_liver.csv")
+## BRAIN
+
+sec = ts_Ssec_target_brain$Ssec
+nsec = tsns_Ssec_target_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = ts_Ssec_target_liver$Ssec
+nsec = tsns_Ssec_target_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
+abline(a = 0, b = 1)
+
+```
+
