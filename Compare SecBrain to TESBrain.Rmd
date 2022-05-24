@@ -1,0 +1,102 @@
+---
+title: "Compare Heritability for Secreted and Tissue-Exclusive, Secreted Protein-Coding Genes in the Brain"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Graph Sec and TES brain heritability
+2. Look at genes lost between Sec and TES with high heritability
+
+
+```{r, echo = FALSE, message = FALSE}
+# Data Input
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+
+fin.r.squared_brain = read.csv("R_Squared_Brain.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+te.secreted_protein_brain = read.csv("TE.Secreted_Protein_Brain.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+fin.r.squared_brain = fix.read.csv(fin.r.squared_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+te.secreted_protein_brain = fix.read.csv(te.secreted_protein_brain)
+
+```
+ 
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+### SUBSET
+
+names = substr(fin.r.squared_brain[,1], 1, 18)
+fin.r.squared_brain[,1] = names
+
+sec_herit = fin.r.squared_brain[fin.r.squared_brain[,1] %in% colnames(secreted_protein_brain),]
+tesec_herit = fin.r.squared_brain[fin.r.squared_brain[,1] %in% colnames(te.secreted_protein_brain),]
+
+`%!in%` <- Negate(`%in%`)
+
+ntesec = sec_herit[,1][sec_herit[,1] %!in% tesec_herit[,1]]
+ntesec_herit = fin.r.squared_brain[fin.r.squared_brain[,1] %in% ntesec,]
+
+# sec v. tesec
+
+gee = cbind(rep("secreted", times = dim(sec_herit)[1]), sec_herit[,2])
+gee2 = cbind(rep("te secreted", times = dim(tesec_herit)[1]), tesec_herit[,2])
+gee3 = cbind(rep("nte secreted", times = dim(ntesec_herit)[1]), ntesec_herit[,2])
+
+wil.b = rbind(gee, gee2, gee3)
+wil.b = as.data.frame(wil.b)
+colnames(wil.b) = c("trt", "r.sq")
+
+wil.b$trt = as.factor(wil.b$trt)
+wil.b$r.sq = as.numeric(wil.b$r.sq)
+
+wil.b.1 = wil.b[wil.b[,1] == "te secreted" | wil.b[,1] == "nte secreted",]
+
+wil.brain = coin::wilcox_test(r.sq ~ trt, wil.b.1)
+
+ngenes = c(dim(sec_herit)[1], dim(tesec_herit)[1], dim(ntesec_herit)[1])
+names(ngenes) = c("Secreted", "Tissue-Exclusive Secreted", "Non-Tissue-Exclusive Secreted")
+
+knitr::kable(ngenes, caption = "Number of Genes in each subset for Brain")
+
+```
+
+The density graph is comparing secreted protein-coding genes in the brain (secreted, green) to tissue-exclusive, secreted protein-coding genes in the brain (te secreted, blue) to non-tissue-exclusive, secreted protein-coding genes in the brain (nte secreted, red).
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+# Density R Squared
+library(tidyverse)
+ggplot(wil.b, aes(x = r.sq, color = trt)) + 
+  geom_density() +
+  labs(title="R Squared Density Curve: Brain",x="R Squared", y = "Density")
+
+```
+
+The histogram plot is comparing secreted protein-coding genes in the brain to tissue-exclusive, secreted protein-coding genes in the brain. It seems that the genes excluded in the tissue-exclusive set have higher heritability than the tissue-exclusive genes. 
+
+```{r, echo = FALSE}
+
+c1 <- rgb(173,216,230,max = 255, alpha = 80, names = "lt.blue")
+c2 <- rgb(255,192,203, max = 255, alpha = 80, names = "lt.pink")
+
+hgA <- hist(sec_herit[,2], plot = FALSE) # Save first histogram data
+hgB <- hist(tesec_herit[,2], plot = FALSE) # Save 2nd histogram data
+
+plot(hgA, col = c1, main = "Comparing Secreted to TE Secreted Brain", xlab = "R Squared") # Plot 1st histogram using a transparent color
+plot(hgB, col = c2, add = TRUE) # Add 2nd histogram using different color
+
+```

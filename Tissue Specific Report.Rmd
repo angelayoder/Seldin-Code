@@ -7,6 +7,10 @@ date: "`r Sys.Date()`"
 **The goals of this program are:**
 
 1. Report results of tissue-specific proteins data
+  a. Flow chart of data reduction
+  b. Create tissue exclusive datasets (sec/nonsec)
+  c. Data summary
+  d. Compare heritability between tissue-exclusive secreted and tissue-exclusive non-secreted
 
 The ensembl rat liver and brain RNAseq data was produced by our lab from tissues imported from the Czech Academy of Sciences laboratory. Inbred strains were excluded, leaving only recombinant inbred strains. The means across strains were calculated for the RNA expression data. Annontation data was retrieved from BiomaRt (version number 2.48.0), which was used to exclude non-protein-coding genes from the data set. This resulted in a dataset of 30 strains and 16,457 genes for brain tissue, and 30 strains and 14,109 genes for liver tissue. 
 
