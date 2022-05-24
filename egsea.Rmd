@@ -1,0 +1,155 @@
+---
+title: "EGSEA Analysis"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Use the package EGSEA to find potential biological functions for gene sets
+a. Import sets of target genes
+b. Run EGSEA analysis
+
+
+```{r, echo = FALSE}
+
+library(EGSEA)
+
+# load data
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+ts_Ssec_target_brain = read.csv("Target_TESec_Ssec_brain.csv")
+ts_Ssec_target_liver = read.csv("Target_TESec_Ssec_liver.csv")
+tsns_Ssec_target_brain = read.csv("Target_TENSec_Ssec_brain.csv")
+tsns_Ssec_target_liver = read.csv("Target_TENSec_Ssec_liver.csv")
+ts_protein_brain = read.csv("TissueSpecific2_Protein_Brain.csv")
+ts_protein_liver = read.csv("TissueSpecific2_Protein_Liver.csv")
+tsns_protein_brain = read.csv("NSTissueSpecific_Protein_Brain.csv")
+tsns_protein_liver = read.csv("NSTissueSpecific_Protein_Liver.csv")
+bicor_brain = read.csv( "Bicor_brain.csv")
+bicor_liver = read.csv( "Bicor_liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+ts_Ssec_target_brain = fix.read.csv(ts_Ssec_target_brain)
+ts_Ssec_target_liver = fix.read.csv(ts_Ssec_target_liver)
+tsns_Ssec_target_brain = fix.read.csv(tsns_Ssec_target_brain)
+tsns_Ssec_target_liver = fix.read.csv(tsns_Ssec_target_liver)
+ts_protein_brain = fix.read.csv(ts_protein_brain)
+ts_protein_liver = fix.read.csv(ts_protein_liver)
+tsns_protein_brain = fix.read.csv(tsns_protein_brain)
+tsns_protein_liver = fix.read.csv(tsns_protein_liver)
+bicor_brain = fix.read.csv(bicor_brain)
+bicor_liver = fix.read.csv(bicor_liver)
+
+
+```
+
+```{r, echo = FALSE}
+
+library(EGSEAdata)
+
+egsea.data("mouse")
+
+```
+
+```{r, echo = FALSE}
+
+# top 4 Ssec values
+
+top_brain = rownames(ts_Ssec_target_brain)[1:5]
+top_liver = rownames(ts_Ssec_target_liver)[1:5]
+
+corr_brain = matrix(NA, nrow = 5, ncol = 403)
+corr_brain = as.data.frame(corr_brain)
+
+for(i in 1:5)
+{
+  one = bicor_brain[top_brain[i] == rownames(bicor_brain),]
+  corr_brain[i,] = one
+}
+rownames(corr_brain) = top_brain
+colnames(corr_brain) = colnames(bicor_brain)
+
+corr_liver = matrix(NA, nrow = 5, ncol = 2763)
+corr_liver = as.data.frame(corr_liver)
+
+for(i in 1:5)
+{
+  one = bicor_liver[top_liver[i] == rownames(bicor_liver),]
+  corr_liver[i,] = one
+}
+
+rownames(corr_liver) = top_liver
+colnames(corr_liver) = colnames(bicor_liver)
+
+target_forbrain = corr_brain < 0.05
+target_forliver = corr_liver < 0.05
+
+num_target_brain = apply(target_forbrain, 1, sum)
+num_target_liver = apply(target_forliver, 1, sum)
+
+knitr::kable(num_target_brain, caption = "Number of Liver Target Genes for Each Top Ssec Brain")
+knitr::kable(num_target_liver, caption = "Number of Brain Target Genes for Each Top Ssec Liver")
+
+```
+
+WHAT THE FUCK
+
+```{r, echo = FALSE}
+# get entrez gene ids
+
+library(biomaRt)
+
+ensembl = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl")
+
+get_attrib <- listAttributes(ensembl)
+go_attrib <- get_attrib[grep("GO ",get_attrib$description),]
+
+# getting entrez ids
+get_entrez = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype"),
+                            #"entrezgene_trans_name",
+                            #"entrezgene_id"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+get_uniprot = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype",
+                            "uniprot_gn_id",
+                            "name_1006",
+                            "definition_1006","go_linkage_type","namespace_1003"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+entrez_tes.brain = get_entrez$entrezgene_id[get_entrez$ensembl_gene_id %in% rownames(ts_Ssec_target_brain)]
+
+sum(get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
+GO_fin = subset(get_uniprot, get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
+
+entrez_tes.liver = get_entrez$entrezgene_id[get_entrez$ensembl_gene_id %in% rownames(ts_Ssec_target_liver)]
+
+
+```
+
+
