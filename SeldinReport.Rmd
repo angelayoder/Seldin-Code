@@ -204,7 +204,8 @@ target_liver = cbind(ts_protein_liver, tsns_protein_liver)
 
 brain.liv = bicorAndPvalue(ts_protein_brain, target_liver, use = 'pairwise.complete.obs')
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 write.csv(brain.liv$p, "Bicor_brain.csv")
 # brain.liv$p
 
@@ -228,7 +229,8 @@ target_brain = cbind(ts_protein_brain, tsns_protein_brain)
 liv.brain = bicorAndPvalue(ts_protein_liver, target_brain, use = 'pairwise.complete.obs')
 # brain.liv$p
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 write.csv(liv.brain$p, "Bicor_liver.csv")
 
 scores = rowSums(-log(liv.brain$p))

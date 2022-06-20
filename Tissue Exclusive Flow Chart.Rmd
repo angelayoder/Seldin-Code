@@ -249,7 +249,7 @@ boxPC = boxGrob(txt4, x = 0.35, y = 0.5)
 txt5 = 
   "Secreted Protein-Coding Genes
 Brain (657 genes)
-Liver (818 genes)"
+Liver (518 genes)"
 boxSe = boxGrob(txt5, x = 0.35, y = 0.70)
 txt6 = 
   "Tissue-Exclusive, Secreted 
@@ -265,14 +265,14 @@ boxNSe = boxGrob(txt7, x = 0.35, y = 0.30)
 txt8 = 
   "Tissue-Exclusive, Non-Secreted 
   Protein-Coding Genes
-Brain (2,589 genes)
-Liver (371 genes)"
+Brain (2,577 genes)
+Liver (368 genes)"
 boxTENS = boxGrob(txt8, x = 0.55, y = 0.30)
 txt9 = 
   "Tissue-Exclusive 
   Protein-Coding Genes
 Brain (2,751 genes)
-Liver (405 genes)"
+Liver (403 genes)"
 boxTE = boxGrob(txt8, x = 0.55, y = 0.5)
 
 connectGrob(boxAR, boxPC, "horizontal")

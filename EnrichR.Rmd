@@ -13,7 +13,30 @@ date: "`r Sys.Date()`"
 
 # https://cran.r-project.org/web/packages/enrichR/vignettes/enrichR.html
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+tesec_brain = read.csv("TE.Sec_Ssec_brain.csv")
+tesec_liver = read.csv("TE.Sec_Ssec_liver.csv")
+tensec_brain = read.csv("TE.NSec_Ssec_brain.csv")
+tensec_liver = read.csv("TE.NSec_Ssec_liver.csv")
+bicor_brain = read.csv("Bicor_brain.csv")
+bicor_liver = read.csv("Bicor_liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+tesec_brain = fix.read.csv(tesec_brain)
+tesec_liver = fix.read.csv(tesec_liver)
+tensec_brain = fix.read.csv(tensec_brain)
+tensec_liver = fix.read.csv(tensec_liver)
+bicor_brain = fix.read.csv(bicor_brain)
+bicor_liver = fix.read.csv(bicor_liver)
 
 # top 5 TES genes for brain and liver
 # the genes theyre correlated to
@@ -25,10 +48,23 @@ setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
 ```{r, echo = FALSE}
 library(enrichR)
 
-setEnrichrSite("Enrichr") # human genes???
-dbs = c("GO_Molecular_Function_2018", "GO_Cellular_Component_2018", "GO_Biological_Process_2018")
+#setEnrichrSite("Enrichr") # human genes???
+#dbs = c("GO_Molecular_Function_2018", "GO_Cellular_Component_2018", "GO_Biological_Process_2018")
+dbs = c("MSigDB_Computational", "MSigDB_Hallmark_2020", "MSigDB_Oncogenic_Signatures")
+fin = c()
+for(i in 1:174)
+{
+  names = colnames(bicor_brain[,bicor_brain[i,] < 0.05])
+  enriched = enrichr(tesec_brain[, 1], dbs)
+  if(dim(enriched$MSigDB_Computational)[1] != 0 | dim(enriched$MSigDB_Hallmark_2020)[1] != 0 | dim(enriched$MSigDB_Oncogenic_Signatures)[1] != 0 )
+  {
+    fin = c(fin, i)
+  }
+}
 
-enriched = enrichr(sec_Ssec_brain[1:100,], dbs)
+
+
+
 
 enriched
 

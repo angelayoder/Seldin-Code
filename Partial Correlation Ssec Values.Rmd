@@ -12,9 +12,7 @@ date: "`r Sys.Date()`"
 4. Look at distribution of Partial Correlation, QQ plots
 5. Use permutation test from Seldin to check null distribution
 
-Problem with Keller- no code, no explanation of how they computed PaCor analytically
-
-Problem with partial correlation methods- don't like that there are more genes than subjects
+Lambda???
 
 ```{r, echo = FALSE, message = FALSE}
 library(WGCNA)
@@ -22,7 +20,8 @@ library(ppcor)
 library(tidyverse)
 
 
-setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
 tes.brain = read.csv("TissueSpecific2_Protein_Brain.csv")
 tes.liver = read.csv("TissueSpecific2_Protein_Liver.csv")
@@ -43,94 +42,39 @@ tens.brain = fix.read.csv(tens.brain)
 tens.liver = fix.read.csv(tens.liver)
 
 ```
-Wow what a cluster fuck
-```{r, echo = FALSE, eval = FALSE}
-
-# PaCor v. BiCor
-# pcor(target, tes) - pull out tes genes?
-target_liver = cbind(tes.liver, tens.liver)
-pacor.brain_data = cbind(tes.brain, target_liver)
-pacor.brain = pcor(pacor.brain_data, method = "spearman")
-
-
-#########
-library(psych)
-
-pacor.brain = partial.r(pacor.brain_data, method = "spearman")
-
-p.pacor.brain = corr.p(pacor.brain, n = 577, ci = FALSE)$p
-
-fin.pacor.brain = p.pacor.brain[rownames(p.pacor.brain) %in% colnames(tes.brain), colnames(p.pacor.brain) %in% colnames(target_liver)]
-
-scores = rowSums(-log(fin.pacor.brain))
-
-pacor_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
-  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
-  mutate(Ssec = score / length(colnames(target_liver))) %>%
-  dplyr::select(-score) %>%
-  arrange(desc(Ssec))
-
-
-###
-sum = c()
-for (i in colnames(tes.brain))
-{
-  pacor.brain = partial.r(cbind(tes.brain[,i], target_liver), method = "spearman")
-
-  p.pacor.brain = corr.p(pacor.brain, n = 404, ci = FALSE)$p
-
-  sum = c(sum, sum(p.pacor.brain[1,]))
-}
-```
-
-These don't like that there are more genes than subjects :(
-
-
-partial.r {psych}	R Documentation
-Find the partial correlations for a set (x) of variables with set (y) removed.
-Description
-A straightforward application of matrix algebra to remove the effect of the variables in the y set from the x set. Input may be either a data matrix or a correlation matrix. Variables in x and y are specified by location. If x and y are not specified, then the effect of all variables are partialled from all the other correlations. May also be done using formula input which is more convenient when comparing results to regression models
-
-Usage
-partial.r(data, x, y, use="pairwise",method="pearson")
-Arguments
-data	
-A data or correlation matrix
-
-x	
-The variable names or locations associated with the X set (or formula input)
-
-y	
-The variable names or locations associated with the Y set to be partialled from the X set
-
-use	
-How should we treat missing data? The default is pairwise complete.
-
-Warning in cor.smooth(R) :
-  Matrix was not positive definite, smoothing was done
-In smc, smcs < 0 were set to .0
-
-####
-
-pcor {ppcor}	R Documentation
-Partial correlation
-Description
-The function pcor can calculate the pairwise partial correlations for each pair of variables given others. In addition, it gives us the p value as well as statistic for each pair of variables.
-
-Usage
-pcor(x, method = c("pearson", "kendall", "spearman"))
-Arguments
-x	
-a matrix or data fram.
-
-method	
-a character string indicating which partial correlation coefficient is to be computed. One of "pearson" (default), "kendall", or "spearman" can be abbreviated.
 
 
 ```{r, echo = FALSE}
 library(GeneNet)
 
-estimate = ggm.estimate.pcor(pacor.brain_data, method = "static", lambda = 0)
+target_liver = cbind(tes.liver, tens.liver)
+
+pacor.ssec.brain = c()
+
+for (i in 1:174)
+{
+  test = data.frame(tes.brain[,i], target_liver)
+  estimate = ggm.estimate.pcor(test, method = "static")
+  edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_liver)
+ 
+  pacor.ssec.brain = c(pacor.ssec.brain, score) 
+}
+
+
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+
+# ARCHIVE BAD STUFF
+
+test = data.frame(tes.brain[,1], target_liver)
+estimate = ggm.estimate.pcor(test, method = "static") #, lambda = 0) # lambda??
 edge = network.test.edges(estimate)
 
 n2kappa(30, p = 577)

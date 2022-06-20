@@ -1,0 +1,266 @@
+---
+title: "Gene Enrichment Analysis with MSigDB"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1.  Identify rat gene sets
+2.  Convert Ensembl Gene IDs into Entrez Ids
+3.  Report on missingness in Biomart
+3.  Use clusterProfiler to do pathway analysis
+
+For our gene set enrichment analysis (GSEA), we will be using the data resource MSigDB (Molecular Signatures Database), "a collection of annotated gene sets for use with GSEA software." This dataset was used in conjunction with the GSEA R package clusterProfiler. 
+We identified our enrichment dataset via the function msigdbr from the msigdbr r package. The species was identified as "Rattus norvegicus." msigdbr has access to multiple collections, including hallmark gene sets (H), and eight different supplementary gene sets (C1 to C8). In this analysis, we did not exclude any of the collections. 
+
+```{r, echo = FALSE}
+library(msigdbr)
+
+all_genes = msigdbr(species = "Rattus norvegicus")
+
+# https://cran.r-project.org/web/packages/msigdbr/vignettes/msigdbr-intro.html
+# https://bioconductor.org/packages/release/bioc/manuals/clusterProfiler/man/clusterProfiler.pdf
+
+```
+
+```{r, echo = FALSE}
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+tesec_brain = read.csv("TE.Sec_Ssec_brain.csv")
+tesec_liver = read.csv("TE.Sec_Ssec_liver.csv")
+tensec_brain = read.csv("TE.NSec_Ssec_brain.csv")
+tensec_liver = read.csv("TE.NSec_Ssec_liver.csv")
+bicor_brain = read.csv("Bicor_brain.csv")
+bicor_liver = read.csv("Bicor_liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+`%!in%` = Negate(`%in%`)
+
+tesec_brain = fix.read.csv(tesec_brain)
+tesec_liver = fix.read.csv(tesec_liver)
+tensec_brain = fix.read.csv(tensec_brain)
+tensec_liver = fix.read.csv(tensec_liver)
+bicor_brain = fix.read.csv(bicor_brain)
+bicor_liver = fix.read.csv(bicor_liver)
+
+# top 5 TES genes for brain and liver
+# the genes theyre correlated to
+# convert to entrez ids
+
+# top 5 genes for brain and liver
+
+top.brain = tesec_brain[1:5,]
+top.liver = tesec_liver[1:5,]
+
+```
+We began by identifying the top five brain and liver tissue-exclusive, secreted (TES) protein-coding genes, as identified by Ssec score. We then identified the target tissue transcripts that were most significantly associated with the top TES protein-coding genes (p-value < 0.05). These will be the gene sets for which we will identify annotations. This results in 138 liver genes that are associated with TES protein-coding genes from the brain, and 935 brain genes that are associated with TES protein-coding genes from the liver. 
+
+```{r, echo = FALSE}
+
+# genes they are correlated to < 0.05
+
+top.corr.brain = bicor_brain[rownames(bicor_brain) %in% rownames(top.brain),]
+top.corr.liver = bicor_liver[rownames(bicor_liver) %in% rownames(top.liver),]
+
+list.oflists = function(mat)
+{
+  out = list(c(), c(), c(), c(), c())
+  for (i in 1:5)
+  {
+    save = colnames(mat[,mat[i,] < 0.05])
+    out[[i]] = save
+  }
+  return(out)
+}
+
+brain.list = list.oflists(top.corr.brain)
+liver.list = list.oflists(top.corr.liver)
+
+combine.brain = unique(c(brain.list[[1]], brain.list[[2]], brain.list[[3]], brain.list[[4]], brain.list[[5]]))
+
+combine.liver = unique(c(liver.list[[1]], liver.list[[2]], liver.list[[3]], liver.list[[4]], liver.list[[5]]))
+
+num.brain = c(length(brain.list[[1]]), length(brain.list[[2]]), length(brain.list[[3]]), length(brain.list[[4]]), length(brain.list[[5]]))
+
+num.liver = c(length(liver.list[[1]]), length(liver.list[[2]]), length(liver.list[[3]]), length(liver.list[[4]]), length(liver.list[[5]]))
+
+num.target.brain = data.frame(top.brain[,1], num.brain)
+num.target.liver = data.frame(top.liver[,1], num.liver)
+colnames(num.target.brain) = c("TES PC from Brain", "Number of Target Genes in Liver")
+colnames(num.target.liver) = c("TES PC from Liver", "Number of Target Genes in Brain")
+
+knitr::kable(num.target.brain, caption = "Number of Target Genes in the Liver associated with TES Protein-Coding Genes from the Brain")
+
+knitr::kable(num.target.liver, caption = "Number of Target Genes in the Brain associated with TES Protein-Coding Genes from the Liver")
+
+```
+
+Entrez gene IDs were identified via biomart version 104. 
+
+## Missingness Report
+
+```{r, echo = FALSE, eval = FALSE}
+
+library(biomaRt)
+#ensembl_version = "https://ensembl.org"
+
+#ensembl = useMart(biomart = "ENSEMBL_MART_ENSEMBL", dataset = "rnorvegicus_gene_ensembl", version = 109)
+ensembl.miss = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl")
+ensembl = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl", version = 104)
+
+get_attrib <- listAttributes(ensembl)
+#go_attrib <- get_attrib[grep("GO ",get_attrib$description),]
+
+# getting entrez ids
+get_entrez = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype",
+                            #"entrezgene_trans_name",
+                            "entrezgene_id"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+get_uniprot = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype",
+                            "uniprot_gn_id",
+                            "name_1006",
+                            "definition_1006","go_linkage_type","namespace_1003"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+entrez_brain.1= get_entrez[get_entrez$ensembl_gene_id %in% combine.brain,]
+
+#sum(get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
+#GO_fin = subset(get_uniprot, get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
+
+entrez_liver.1 = get_entrez[get_entrez$ensembl_gene_id %in% combine.liver,]
+
+# missing gene ids
+
+missing_b = combine.brain[combine.brain %!in% entrez_brain$ensembl_gene_id]
+# 15 missing TES : "ENSRNOG00000047739" "ENSRNOG00000008563" "ENSRNOG00000009140" "ENSRNOG00000038437" "ENSRNOG00000034130" "ENSRNOG00000003887" "ENSRNOG00000007374" "ENSRNOG00000013441" "ENSRNOG00000003891" "ENSRNOG00000038980" "ENSRNOG00000013228" "ENSRNOG00000038150" "ENSRNOG00000049171" "ENSRNOG00000011074" "ENSRNOG00000050172"
+
+# 28 missing target : "ENSRNOG00000003498" "ENSRNOG00000047079" "ENSRNOG00000053527" "ENSRNOG00000057548" "ENSRNOG00000033130" "ENSRNOG00000042543" "ENSRNOG00000046529" "ENSRNOG00000049727" "ENSRNOG00000050499" "ENSRNOG00000050885" "ENSRNOG00000051227" "ENSRNOG00000052192" "ENSRNOG00000054524" "ENSRNOG00000061059" "ENSRNOG00000020805" "ENSRNOG00000003648" "ENSRNOG00000047785" "ENSRNOG00000056194" "ENSRNOG00000013410" "ENSRNOG00000049009" "ENSRNOG00000057089" "ENSRNOG00000059007" "ENSRNOG00000061217" "ENSRNOG00000003054" "ENSRNOG00000042197" "ENSRNOG00000047520" "ENSRNOG00000047821" "ENSRNOG00000048017"
+
+missing_l = combine.liver[combine.liver %!in% entrez_liver$ensembl_gene_id]
+# 12 missing TES : "ENSRNOG00000020805" "ENSRNOG00000050499" "ENSRNOG00000049727" "ENSRNOG00000033130" "ENSRNOG00000042543" "ENSRNOG00000046529" "ENSRNOG00000013464" "ENSRNOG00000049515" "ENSRNOG00000013410" "ENSRNOG00000016535" "ENSRNOG00000033619" "ENSRNOG00000033245"
+
+# 116 missing target : "ENSRNOG00000038437" "ENSRNOG00000001057" "ENSRNOG00000006591" "ENSRNOG00000007705" "ENSRNOG00000008475" "ENSRNOG00000009241" "ENSRNOG00000019857" "ENSRNOG00000021533" "ENSRNOG00000028576" "ENSRNOG00000038976" "ENSRNOG00000043358" "ENSRNOG00000045720" "ENSRNOG00000045960" "ENSRNOG00000046838" "ENSRNOG00000049878" "ENSRNOG00000052459" "ENSRNOG00000053258" "ENSRNOG00000055404" "ENSRNOG00000056130" "ENSRNOG00000057009" "ENSRNOG00000057250" "ENSRNOG00000057522" "ENSRNOG00000057724" "ENSRNOG00000061051" "ENSRNOG00000009140" "ENSRNOG00000005665" "ENSRNOG00000006226" "ENSRNOG00000007219" "ENSRNOG00000008544" "ENSRNOG00000009835" "ENSRNOG00000010720" "ENSRNOG00000011640" "ENSRNOG00000014847" "ENSRNOG00000024726" "ENSRNOG00000028279" "ENSRNOG00000042321" "ENSRNOG00000042502" "ENSRNOG00000042971" "ENSRNOG00000042985" "ENSRNOG00000043382" "ENSRNOG00000045545" "ENSRNOG00000045767" "ENSRNOG00000045837" "ENSRNOG00000046212" "ENSRNOG00000046272" "ENSRNOG00000047890" "ENSRNOG00000048172" "ENSRNOG00000048322" "ENSRNOG00000048765" "ENSRNOG00000050134" "ENSRNOG00000054121" "ENSRNOG00000055892" "ENSRNOG00000056186" "ENSRNOG00000058047" "ENSRNOG00000058276" "ENSRNOG00000058766" "ENSRNOG00000058984" "ENSRNOG00000059734" "ENSRNOG00000060719" "ENSRNOG00000062048" "ENSRNOG00000002953" "ENSRNOG00000022107" "ENSRNOG00000042211" "ENSRNOG00000047780" "ENSRNOG00000061301" "ENSRNOG00000038150" "ENSRNOG00000038980" "ENSRNOG00000003395" "ENSRNOG00000006051" "ENSRNOG00000009917" "ENSRNOG00000010749" "ENSRNOG00000011856" "ENSRNOG00000012477" "ENSRNOG00000019958" "ENSRNOG00000021183" "ENSRNOG00000022919" "ENSRNOG00000027929" "ENSRNOG00000029837" "ENSRNOG00000031734" "ENSRNOG00000032206" "ENSRNOG00000033894" "ENSRNOG00000034287" "ENSRNOG00000037852" "ENSRNOG00000038184" "ENSRNOG00000039050" "ENSRNOG00000042516" "ENSRNOG00000042939" "ENSRNOG00000046844" "ENSRNOG00000047864" "ENSRNOG00000048722" "ENSRNOG00000049435" "ENSRNOG00000050378" "ENSRNOG00000056555" "ENSRNOG00000057059" "ENSRNOG00000057228" "ENSRNOG00000059539" "ENSRNOG00000060482" "ENSRNOG00000060898" "ENSRNOG00000062013" "ENSRNOG00000000060" "ENSRNOG00000005114" "ENSRNOG00000006320" "ENSRNOG00000009388" "ENSRNOG00000009635" "ENSRNOG00000020821" "ENSRNOG00000021302" "ENSRNOG00000023404" "ENSRNOG00000024678" "ENSRNOG00000046157" "ENSRNOG00000047724" "ENSRNOG00000049802" "ENSRNOG00000050511" "ENSRNOG00000057758" "ENSRNOG00000057852" "ENSRNOG00000058416" "ENSRNOG00000060181"
+
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(entrez_brain.1, "EntrezIds_brain.csv")
+write.csv(entrez_liver.1, "EntrezIds_liver.csv")
+
+
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+
+# duplicates
+adding = c()
+dup = c()
+for (i in entrez_tes.brain$ensembl_gene_id)
+{
+  if (i %in% adding)
+  {
+    dup = c(dup, i)
+  }
+  else
+  {
+    adding = c(adding, i)
+  }
+  
+}
+
+dup.entrez = entrez_tes.brain$entrezgene_id[entrez_tes.brain$ensembl_gene_id %in% dup]
+# there are 4 NAs in the brain dataset
+# there are 3 ensembl duplicates in brain dataset
+# there are 5 ensembl duplicates in liver dataset
+
+
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+entrez_brain = read.csv("EntrezIds_brain.csv")
+entrez_liver = read.csv("EntrezIds_liver.csv")
+
+entrez_brain = fix.read.csv(entrez_brain)
+entrez_liver = fix.read.csv(entrez_liver)
+
+#msigdbr_t2g = msigdbr_df %>% dplyr::distinct(gs_name, entrez_gene) %>% as.data.frame()
+#enricher(gene = gene_ids_vector, TERM2GENE = msigdbr_t2g, ...)
+
+msigdbr_t2g = all_genes %>% dplyr::distinct(gs_name, entrez_gene) %>% as.data.frame()
+
+
+library(clusterProfiler)
+
+# pAdjustMethod, min/max (number?) of genes
+
+#enricher(gene = target_genes, TERM2GENE = msigdbr_t2g, ...)
+
+# brain.list, liver.list
+
+out.brain = list(c(), c(), c(), c(), c())
+
+for (i in 1:5)
+{
+  vect = brain.list[[i]]
+  entrez = entrez_brain$entrezgene_id[entrez_brain$ensembl_gene_id %in% vect]
+  entrez = na.omit(entrez)
+  listt = enricher(gene = entrez, TERM2GENE = msigdbr_t2g, pAdjustMethod = "fdr")
+  out.brain[[i]] = data.frame(ID = listt$ID, Description = listt$Description, pvalue = listt$pvalue, p.adjust = listt$p.adjust, geneID = listt$geneID)
+}
+
+out.liver = list(c(), c(), c(), c(), c())
+
+for (i in 1:5)
+{
+  vect = liver.list[[i]]
+  entrez = entrez_liver$entrezgene_id[entrez_liver$ensembl_gene_id %in% vect]
+  entrez = na.omit(entrez)
+  listt = enricher(gene = entrez, TERM2GENE = msigdbr_t2g, pAdjustMethod = "fdr")
+  out.liver[[i]] = data.frame(ID = listt$ID, Description = listt$Description, pvalue = listt$pvalue, p.adjust = listt$p.adjust, geneID = listt$geneID)
+}
+
+
+brain.ids = c(paste(out.brain[[1]]$ID, collapse = ", "), paste(out.brain[[2]]$ID, collapse = ", "), paste(out.brain[[3]]$ID, collapse = ", "), paste(out.brain[[4]]$ID, collapse = ", "), paste(out.brain[[5]]$ID, collapse = ", "))
+names(brain.ids) = top.brain[,1]
+
+knitr::kable(brain.ids, caption = "Enrichment of Target Liver Genes Influenced by TES Protein-Coding Genes from the Brain", colnames = "")
+
+liver.ids = c(paste(out.liver[[1]]$ID, collapse = ", "), paste(out.liver[[2]]$ID, collapse = ", "), paste(out.liver[[3]]$ID, collapse = ", "), paste(out.liver[[4]]$ID, collapse = ", "), paste(out.liver[[5]]$ID, collapse = ", "))
+names(liver.ids) = top.liver[,1]
+
+knitr::kable(liver.ids, caption = "Enrichment of Target Liver Genes Influenced by TES Protein-Coding Genes from the Liver", colnames = "")
+
+```
+
+
+

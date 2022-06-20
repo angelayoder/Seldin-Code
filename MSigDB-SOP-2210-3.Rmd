@@ -1,0 +1,112 @@
+---
+title: "Gene Enrichment Analysis with MSigDB"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1.  Identify rat gene sets
+2.  Convert Ensembl Gene IDs into Gene Symbol
+3.  Use clusterProfiler to do pathway analysis
+
+https://cran.r-project.org/web/packages/msigdbr/vignettes/msigdbr-intro.html
+
+```{r, echo = FALSE}
+library(msigdbr)
+
+all_genes = msigdbr(species = "Rattus norvegicus")
+
+```
+
+```{r, echo = FALSE}
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+tesec_brain = read.csv("TE.Sec_Ssec_brain.csv")
+tesec_liver = read.csv("TE.Sec_Ssec_liver.csv")
+tensec_brain = read.csv("TE.NSec_Ssec_brain.csv")
+tensec_liver = read.csv("TE.NSec_Ssec_liver.csv")
+bicor_brain = read.csv("Bicor_brain.csv")
+bicor_liver = read.csv("Bicor_liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+`%!in%` = Negate(`%in%`)
+
+tesec_brain = fix.read.csv(tesec_brain)
+tesec_liver = fix.read.csv(tesec_liver)
+tensec_brain = fix.read.csv(tensec_brain)
+tensec_liver = fix.read.csv(tensec_liver)
+bicor_brain = fix.read.csv(bicor_brain)
+bicor_liver = fix.read.csv(bicor_liver)
+
+# top 5 TES genes for brain and liver
+# the genes theyre correlated to
+# convert to gene names
+
+```
+
+Fuck this shit
+
+```{r, echo = FALSE}
+
+library(biomaRt)
+ensembl_version = "https://ensembl.org"
+
+ensembl = useMart(biomart = "ENSEMBL_MART_ENSEMBL", dataset = "rnorvegicus_gene_ensembl", version = 109)
+ensembl = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl")
+
+get_attrib <- listAttributes(ensembl)
+#go_attrib <- get_attrib[grep("GO ",get_attrib$description),]
+
+# getting entrez ids
+get_entrez = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype",
+                            #"entrezgene_trans_name",
+                            "entrezgene_id"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+get_uniprot = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype",
+                            "uniprot_gn_id",
+                            "name_1006",
+                            "definition_1006","go_linkage_type","namespace_1003"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+entrez_tes.brain = get_entrez[get_entrez$ensembl_gene_id %in% rownames(tesec_brain),]
+
+#sum(get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
+#GO_fin = subset(get_uniprot, get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
+
+entrez_tes.liver = get_entrez[get_entrez$ensembl_gene_id %in% rownames(tesec_liver),]
+
+# missing gene ids
+
+missing_b = rownames(tesec_brain)[rownames(tesec_brain) %!in% entrez_tes.brain$ensembl_gene_id]
+
+missing_l = rownames(tesec_liver)[rownames(tesec_liver) %!in% entrez_tes.liver$ensembl_gene_id]
+
+
+
+```
