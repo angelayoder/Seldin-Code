@@ -1,0 +1,154 @@
+I hate onedrive. I thought I fixed this problem this little shit.
+
+```{r, echo = FALSE}
+
+# Calculating Pearson Correlation
+
+target_liver = cbind(tes.liver, tens.liver)
+target_brain = cbind(tes.brain, tens.brain)
+
+pearson.pval = function(ex, why)
+{
+  test = cor.test(ex, y = why, alternative = "two.sided", method = "pearson")
+  return(test$p.value)
+}
+
+pear.ssec.brain = c()
+
+for (i in 1:174)
+{
+
+  estimate = apply(target_liver, MARGIN = 2, FUN = pearson.pval, why = tes.brain[,i])
+
+  score = sum(-log(estimate))/length(target_liver)
+ 
+  pear.ssec.brain = c(pear.ssec.brain, score) 
+}
+
+
+pear.ssec.liver = c()
+
+for (i in 1:35)
+{
+
+  estimate = apply(target_brain, MARGIN = 2, FUN = pearson.pval, why = tes.liver[,i])
+
+  score = sum(-log(estimate))/length(target_brain)
+ 
+  pear.ssec.liver = c(pear.ssec.liver, score) 
+}
+
+
+```
+
+```{r, echo = FALSE}
+
+
+h1 = cbind(rep("Bicor", times = 174), ts_Ssec_target_brain$Ssec)
+h2 = cbind(rep("PaCor", times = 174), pacor.ssec.brain.fin$ssec)
+h3 = cbind(rep("Pearson", times = 174), pear.ssec.brain)
+
+compare = rbind(h1, h2, h3)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="TItle", x = "Ssec", y = "Density")
+
+# liver
+
+h1 = cbind(rep("Bicor", times = 35), ts_Ssec_target_liver$Ssec)
+h2 = cbind(rep("PaCor", times = 35), pacor.ssec.liver.fin$ssec)
+h3 = cbind(rep("Pearson", times = 35), pear.ssec.liver)
+
+compare = rbind(h1, h2, h3)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="TItle", x = "Ssec", y = "Density")
+
+
+```
+
+```{r, echo = FALSE}
+pacor.ssec.brain.sort = pacor.ssec.brain.fin %>%
+  arrange(desc(ssec))
+
+pacor.ssec.liver.sort = pacor.ssec.liver.fin %>%
+  arrange(desc(ssec))
+
+comparison.liver = data.frame(Bicor_gene = ts_Ssec_target_liver$Gene_symbol, Bicor_Ssec = ts_Ssec_target_liver$Ssec, PaCor_gene = pacor.ssec.liver.sort$gene, Pacor_Ssec = pacor.ssec.liver.sort$ssec)
+
+comparison.brain = data.frame(Bicor_gene = ts_Ssec_target_brain$Gene_symbol, Bicor_Ssec = ts_Ssec_target_brain$Ssec, PaCor_gene = pacor.ssec.brain.sort$gene, Pacor_Ssec = pacor.ssec.brain.sort$ssec)
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+write.csv(comparison.brain, "Compare_Bicor_Pacor_SsecBrain_rank.csv")
+write.csv(comparison.liver, "Compare_Bicor_Pacor_SsecLiver_rank.csv")
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+
+# compare correlation
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+corr.pacorssec.brain = read.csv("Pacor_Brain_TES.csv")
+corr.pacorssec.liver = read.csv("Pacor_Liver_TES.csv")
+
+corr.pacorssec.brain = fix.read.csv(corr.pacorssec.brain)
+corr.pacorssec.liver = fix.read.csv(corr.pacorssec.liver)
+
+bicor_brain = bicorAndPvalue(tes.brain, target_liver)
+bicor_liver = bicorAndPvalue(tes.liver, target_brain)
+
+#######################################################
+# CORRELATION
+thisone = sample(1:174, 1)
+thisone
+h1 = cbind(rep("Bicor", times = 403), bicor_brain$bicor[thisone,])
+h2 = cbind(rep("PaCor", times = 403), corr.pacorssec.brain[,thisone])
+
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Correlation Value Bicor v. PaCor", x = "Correlation Value", y = "Density")
+
+# PVALUE
+thisone = sample(1:174, 1)
+thisone
+h1 = cbind(rep("Bicor", times = 403), bicor_brain$p[thisone,])
+h2 = cbind(rep("PaCor", times = 403), corr.pacorssec.brain[,thisone])
+
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Correlation Value Bicor v. PaCor", x = "Correlation Value", y = "Density")
+
+```

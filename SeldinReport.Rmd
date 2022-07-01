@@ -23,8 +23,8 @@ library(WGCNA)
 
 # Data Input
 
-#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 protein_liver = read.csv("Liver_WGCNA.csv")
 protein_brain = read.csv("Brain_WGCNA.csv")
 secreted_protein_brain = read.csv("Secreted_Brain.csv")
@@ -197,15 +197,16 @@ The graphs below modify the comparison slightly. Instead of comparing the tissue
 ## Comparing Tissue-Specific Secreted to Tissue-Specific Non-Secreted with reference group Tissue-Specific Target Genes 
 
 ```{r, echo = FALSE, message = FALSE}
-# Calculate Ssec values: tissue-specific -> ns tissue-specific
+# Calculate Ssec values: tissue-specific -> s tissue-specific
 #### TS ####
 ## BRAIN ##
 target_liver = cbind(ts_protein_liver, tsns_protein_liver)
+target_liver = target_liver[rownames(ts_protein_brain),]
 
 brain.liv = bicorAndPvalue(ts_protein_brain, target_liver, use = 'pairwise.complete.obs')
 
-#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 write.csv(brain.liv$p, "Bicor_brain.csv")
 # brain.liv$p
 
@@ -225,12 +226,13 @@ bot_brain = tail(ts_Ssec_brain[,1])
 ## LIVER ##
 
 target_brain = cbind(ts_protein_brain, tsns_protein_brain)
+target_brain = target_brain[rownames(ts_protein_liver),]
 
 liv.brain = bicorAndPvalue(ts_protein_liver, target_brain, use = 'pairwise.complete.obs')
 # brain.liv$p
 
-#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 write.csv(liv.brain$p, "Bicor_liver.csv")
 
 scores = rowSums(-log(liv.brain$p))
@@ -282,7 +284,8 @@ tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
 #top_liver = head(ts_Ssec_liver[,1])
 #bot_liver = tail(ts_Ssec_liver[,1])
 
-setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
 write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
 write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")

@@ -6,20 +6,25 @@ date: "`r Sys.Date()`"
 
 **The goals of this program are:**
 
-1. Compare theory behind partial midweight correlation and partial correlation
-2. Calculate Partial Correlation, compare to biweight midcorrelation
-3. Convert Partial Correlation to Ssec Scores
-4. Look at distribution of Partial Correlation, QQ plots
-5. Use permutation test from Seldin to check null distribution
+1.  Compare theory behind partial midweight correlation and partial correlation
+2.  Convert Partial Correlation to Ssec Scores
+3.  Look at distribution of Partial Correlation, QQ plots
+4.  Use permutation test from Seldin to check null distribution
 
-Lambda???
+### Theory
+
+Partial Correlation: Adjusts for confounders in correlation. These are calculated via the function ggm.estimate.pcor from the GeneNet package via shrinkage? according to methods established in Schafer and Strimmer (2005). These allow for calculation of correlation for datasets where there are more variables than subjects, as is common in genetics data. 
+
+Biweight Midcorrelation: semi-parametric median-based correlation measure which is not susceptible to outliers. [I could do a sensitivity analysis to see how influential outliers could be within Ssec measure for pacor v. bicor? "Fast R Functions for Robust Correlations and Hierarchical Clustering"]
 
 ```{r, echo = FALSE, message = FALSE}
+#https://cran.r-project.org/web/packages/correlation/vignettes/types.html
+
+## PACKAGES
 library(WGCNA)
-library(ppcor)
 library(tidyverse)
 
-
+## DATA
 setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
 #setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
@@ -43,17 +48,100 @@ tens.liver = fix.read.csv(tens.liver)
 
 ```
 
+```{r, echo = FALSE, eval = FALSE}
+### CALCULATION OF PACOR SSEC TES ###
 
-```{r, echo = FALSE}
 library(GeneNet)
 
-target_liver = cbind(tes.liver, tens.liver)
+## TES BRAIN ##
+
+target_liver = cbind(tes.liver, tens.liver) #merge instead
+target_liver = target_liver[rownames(tes.brain),]
 
 pacor.ssec.brain = c()
 
 for (i in 1:174)
 {
   test = data.frame(tes.brain[,i], target_liver)
+  estimate = ggm.estimate.pcor(test, method = "static")
+  edge = network.test.edges(estimate) 
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_liver)
+ 
+  pacor.ssec.brain = c(pacor.ssec.brain, score)
+  
+  if (i == 1)
+  {
+    corr.pacorssec.brain = this$pcor
+    pval.pacorssec.brain = this$pval
+    max.min.brain = c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval))
+  } else {
+    corr.pacorssec.brain = cbind(corr.pacorssec.brain, this$pcor)
+    pval.pacorssec.brain = cbind(pval.pacorssec.brain, this$pval)
+    max.min.brain = cbind(max.min.brain, c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval)))
+  }
+}
+
+## TES LIVER ##
+
+target_brain = cbind(tes.brain, tens.brain)
+target_brain = target_brain[rownames(tes.liver),]
+
+pacor.ssec.liver = c()
+
+for (i in 1:35)
+{
+  test = data.frame(tes.liver[,i], target_brain)
+  estimate = ggm.estimate.pcor(test, method = "static") 
+  edge = network.test.edges(estimate) 
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_brain)
+ 
+  pacor.ssec.liver = c(pacor.ssec.liver, score)
+  
+  if (i == 1)
+  {
+    corr.pacorssec.liver = this$pcor
+    pval.pacorssec.liver = this$pval
+    max.min.liver = c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval))
+  } else {
+    corr.pacorssec.liver = cbind(corr.pacorssec.liver, this$pcor)
+    pval.pacorssec.liver = cbind(pval.pacorssec.liver, this$pval)
+    max.min.liver = cbind(max.min.liver, c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval)))
+  }
+}
+
+pacor.ssec.brain.fin = data.frame(gene = colnames(tes.brain), ssec = pacor.ssec.brain)
+pacor.ssec.liver.fin = data.frame(gene = colnames(tes.liver), ssec = pacor.ssec.liver)
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+#write.csv(pacor.ssec.brain.fin, "TES_PaCor_Ssec_brain.csv")
+#write.csv(pacor.ssec.liver.fin, "TES_PaCor_Ssec_liver.csv")
+write.csv(corr.pacorssec.brain, "Pacor_Brain_TES.csv")
+write.csv(corr.pacorssec.liver, "Pacor_Liver_TES.csv")
+write.csv(pval.pacorssec.brain, "Pacor.pval_Brain_TES.csv")
+write.csv(pval.pacorssec.liver, "Pacor.pval_Liver_TES.csv")
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+### CALCULATION OF PACOR SSEC TENS ###
+
+## TENS BRAIN ##
+
+pacor.tens.ssec.brain = c()
+
+for (i in 1:2589)
+{
+  test = data.frame(tens.brain[,i], target_liver)
   estimate = ggm.estimate.pcor(test, method = "static")
   edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
   
@@ -62,32 +150,478 @@ for (i in 1:174)
   this = edge[edge$node1 == 1,]
   score = sum(-log(this$pval))/length(target_liver)
  
-  pacor.ssec.brain = c(pacor.ssec.brain, score) 
+  pacor.tens.ssec.brain = c(pacor.tens.ssec.brain, score) 
+}
+
+## TENS LIVER ##
+
+pacor.tens.ssec.liver = c()
+
+for (i in 1:368)
+{
+  test = data.frame(tens.liver[,i], target_brain)
+  estimate = ggm.estimate.pcor(test, method = "static")
+  edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_brain)
+ 
+  pacor.tens.ssec.liver = c(pacor.tens.ssec.liver, score) 
+}
+
+pacor.tens.ssec.brain.fin = data.frame(gene = colnames(tens.brain), ssec = pacor.tens.ssec.brain)
+pacor.tens.ssec.liver.fin = data.frame(gene = colnames(tens.liver), ssec = pacor.tens.ssec.liver)
+
+setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+#write.csv(pacor.tens.ssec.brain.fin, "TENS_PaCor_Ssec_brain.csv")
+write.csv(pacor.tens.ssec.liver.fin, "TENS_PaCor_Ssec_liver.csv")
+
+```
+
+```{r, echo = FALSE}
+### DATA ###
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+ts_Ssec_target_brain = read.csv("Target_TESec_Ssec_brain.csv")
+ts_Ssec_target_liver = read.csv("Target_TESec_Ssec_liver.csv")
+tsns_Ssec_target_brain = read.csv("Target_TENSec_Ssec_brain.csv")
+tsns_Ssec_target_liver = read.csv("Target_TENSec_Ssec_liver.csv")
+pacor.ssec.brain.fin = read.csv("TES_PaCor_Ssec_brain.csv")
+pacor.ssec.liver.fin = read.csv("TES_PaCor_Ssec_liver.csv")
+pacor.tens.ssec.brain.fin = read.csv("TENS_PaCor_Ssec_brain.csv")
+pacor.tens.ssec.liver.fin = read.csv("TENS_PaCor_Ssec_liver.csv")
+
+pacor.ssec.brain.fin = fix.read.csv(pacor.ssec.brain.fin)
+pacor.ssec.liver.fin = fix.read.csv(pacor.ssec.liver.fin)
+pacor.tens.ssec.brain.fin = fix.read.csv(pacor.tens.ssec.brain.fin)
+pacor.tens.ssec.liver.fin = fix.read.csv(pacor.tens.ssec.liver.fin)
+
+```
+
+### Pearson Correlation Comparison
+
+Ssec scores calculated with Pearson Correlation are fairly similar to Ssec scores calculated with biweight midcorrelation. Ssec scores calculated with partial correlation are significantly different from both pearson ssec scores and bicor ssec scores. 
+
+```{r, echo = FALSE}
+
+# Calculating Pearson Correlation
+
+target_liver = cbind(tes.liver, tens.liver)
+target_brain = cbind(tes.brain, tens.brain)
+
+pearson.pval = function(ex, why)
+{
+  test = cor.test(ex, y = why, alternative = "two.sided", method = "pearson")
+  return(test$p.value)
+}
+
+pear.ssec.brain = c()
+
+for (i in 1:174)
+{
+
+  estimate = apply(target_liver, MARGIN = 2, FUN = pearson.pval, why = tes.brain[,i])
+
+  score = sum(-log(estimate))/length(target_liver)
+ 
+  pear.ssec.brain = c(pear.ssec.brain, score) 
 }
 
 
+pear.ssec.liver = c()
+
+for (i in 1:35)
+{
+
+  estimate = apply(target_brain, MARGIN = 2, FUN = pearson.pval, why = tes.liver[,i])
+
+  score = sum(-log(estimate))/length(target_brain)
+ 
+  pear.ssec.liver = c(pear.ssec.liver, score) 
+}
+
 
 ```
+
+```{r, echo = FALSE}
+
+
+h1 = cbind(rep("Bicor", times = 174), ts_Ssec_target_brain$Ssec)
+h2 = cbind(rep("PaCor", times = 174), pacor.ssec.brain.fin$ssec)
+h3 = cbind(rep("Pearson", times = 174), pear.ssec.brain)
+
+compare = rbind(h1, h2, h3)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title = "Ssec Scores: Pearson v. PaCor v. Bicor in Brain", x = "Ssec", y = "Density")
+
+# liver
+
+h1 = cbind(rep("Bicor", times = 35), ts_Ssec_target_liver$Ssec)
+h2 = cbind(rep("PaCor", times = 35), pacor.ssec.liver.fin$ssec)
+h3 = cbind(rep("Pearson", times = 35), pear.ssec.liver)
+
+compare = rbind(h1, h2, h3)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Ssec Scores: Pearson v. PaCor v. Bicor in Liver", x = "Ssec", y = "Density")
+
+
+```
+
+### Direct Comparisons
+
+Looking at the ranked Ssec scores for those calculated with biweight midcorrelation and partial correlation, they appear to be flipped. The highest ssec scores for bicor are some of the lowest ssec scores for pacor (dark red, red, orange, yellow). The highest ssec scores for pacor are some the lowest ssec scores for bicor (light green, green, light blue, blue). 
+
+![Comparison PaCor Ssec v. Bicor Ssec](C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data/PaCor v Bicor.1.png)
+$$ ... $$
+![Comparison PaCor Ssec v. Bicor Ssec](C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data/PaCor v Bicor.2.png)
+
+$$ ... $$
+![Comparison PaCor Ssec v. Bicor Ssec](C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data/PaCor v Bicor.3.png)
+
+```{r, echo = FALSE, eval = FALSE}
+pacor.ssec.brain.sort = pacor.ssec.brain.fin %>%
+  arrange(desc(ssec))
+
+pacor.ssec.liver.sort = pacor.ssec.liver.fin %>%
+  arrange(desc(ssec))
+
+comparison.liver = data.frame(Bicor_gene = ts_Ssec_target_liver$Gene_symbol, Bicor_Ssec = ts_Ssec_target_liver$Ssec, PaCor_gene = pacor.ssec.liver.sort$gene, Pacor_Ssec = pacor.ssec.liver.sort$ssec)
+
+comparison.brain = data.frame(Bicor_gene = ts_Ssec_target_brain$Gene_symbol, Bicor_Ssec = ts_Ssec_target_brain$Ssec, PaCor_gene = pacor.ssec.brain.sort$gene, Pacor_Ssec = pacor.ssec.brain.sort$ssec)
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+write.csv(comparison.brain, "Compare_Bicor_Pacor_SsecBrain_rank.csv")
+write.csv(comparison.liver, "Compare_Bicor_Pacor_SsecLiver_rank.csv")
+
+```
+
+### Comparing Correlation Values and P-values
+
+The following tables and graphs show very little variability in the partial correlation values, compared to biweight midcorrelation values. The p-values on the other hand, match much more closely.
+
+```{r, echo = FALSE}
+
+# compare correlation
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+corr.pacorssec.brain = read.csv("Pacor_Brain_TES.csv")
+corr.pacorssec.liver = read.csv("Pacor_Liver_TES.csv")
+pval.pacorssec.brain = read.csv("Pacor.pval_Brain_TES.csv")
+pval.pacorssec.liver = read.csv("Pacor.pval_Liver_TES.csv")
+
+corr.pacorssec.brain = fix.read.csv(corr.pacorssec.brain)
+corr.pacorssec.liver = fix.read.csv(corr.pacorssec.liver)
+pval.pacorssec.brain = fix.read.csv(pval.pacorssec.brain)
+pval.pacorssec.liver = fix.read.csv(pval.pacorssec.liver)
+
+bicor_brain = bicorAndPvalue(tes.brain, target_liver)
+bicor_liver = bicorAndPvalue(tes.liver, target_brain)
+
+#######################################################
+corr.pval = data.frame(max.correlation.value = c(0.006, 0.72), min.pvalue = c(4.8e-09, 6.2e-06))
+rownames(corr.pval) = c("Partial Correlation", "Biweight Midcorrelation")
+
+# CORRELATION
+thisone = sample(1:174, 1)
+thisone
+h1 = cbind(rep("Bicor", times = 403), bicor_brain$bicor[thisone,])
+h2 = cbind(rep("PaCor", times = 403), corr.pacorssec.brain[,thisone])
+
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Correlation Value Bicor v. PaCor, Random TES Protein-Coding Gene from Brain", x = "Correlation Value", y = "Density")
+
+thatone = sample(1:35, 1)
+thatone
+h1 = cbind(rep("Bicor", times = 2751), bicor_liver$bicor[thatone,])
+h2 = cbind(rep("PaCor", times = 2751), corr.pacorssec.liver[,thatone])
+
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Correlation Value Bicor v. PaCor, Random TES Protein-Coding Gene from Liver", x = "Correlation Value", y = "Density")
+
+# PVALUE
+
+h1 = cbind(rep("Bicor", times = 403), bicor_brain$p[thisone,])
+h2 = cbind(rep("PaCor", times = 403), pval.pacorssec.brain[,thisone])
+
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="P-Value Bicor v. PaCor, Random TES Protein-Coding Gene from Brain", x = "Correlation Value", y = "Density")
+
+h1 = cbind(rep("Bicor", times = 2751), bicor_liver$p[thatone,])
+h2 = cbind(rep("PaCor", times = 2751), pval.pacorssec.liver[,thatone])
+
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="P-Value Bicor v. PaCor, Random TES Protein-Coding Gene from Liver", x = "Correlation Value", y = "Density")
+
+```
+
+### Distribution of Ssec Scores
+
+```{r, echo = FALSE}
+
+### Compare distributions ###
+
+# TES PaCor v. TES Bicor
+#Brain
+h1 = cbind(rep("PaCor Brain", times = length(pacor.ssec.brain.fin$ssec)), pacor.ssec.brain.fin$ssec)
+h2 = cbind(rep("Bicor Brain", times = length(ts_Ssec_target_brain$Ssec)), ts_Ssec_target_brain$Ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="PaCor Ssec Values v. Bicor Ssec Values: Brain", x = "Ssec", y = "Density")
+
+# Liver
+h1 = cbind(rep("PaCor Liver", times = length(pacor.ssec.liver.fin$ssec)), pacor.ssec.liver.fin$ssec)
+h2 = cbind(rep("Bicor Liver", times = length(ts_Ssec_target_liver$Ssec)), ts_Ssec_target_liver$Ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="PaCor Ssec Values v. Bicor Ssec Values: Liver", x = "Ssec", y = "Density")
+
+# TES PaCor v. TENS PaCor
+#Brain
+h1 = cbind(rep("TES Brain", times = length(pacor.ssec.brain.fin$ssec)), pacor.ssec.brain.fin$ssec)
+h2 = cbind(rep("TENS Brain", times = length(pacor.tens.ssec.brain.fin$ssec)), pacor.tens.ssec.brain.fin$ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="TES v. TENS PaCor Ssec Value: Brain", x = "Ssec", y = "Density")
+
+# Liver
+h1 = cbind(rep("TES Liver", times = length(pacor.ssec.liver.fin$ssec)), pacor.ssec.liver.fin$ssec)
+h2 = cbind(rep("TENS Liver", times = length(pacor.tens.ssec.liver.fin$ssec)), pacor.tens.ssec.liver.fin$ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="TES v. TENS PaCor Ssec Value: Liver", x = "Ssec", y = "Density")
+
+```
+
 
 ```{r, echo = FALSE, eval = FALSE}
 
-# ARCHIVE BAD STUFF
+# trying something
 
-test = data.frame(tes.brain[,1], target_liver)
-estimate = ggm.estimate.pcor(test, method = "static") #, lambda = 0) # lambda??
-edge = network.test.edges(estimate)
+quant = function(x)
+{
+  out = c()
+  cdf = ecdf(x)
+  for (i in x)
+  {
+    gee = cdf(i)
+    out = c(out, gee)
+  }
+  return(out)
+}
 
-n2kappa(30, p = 577)
+pacor.brain = quant(compare$val[compare$trt == "PaCor Brain"])
+bicor.brain = quant(compare$val[compare$trt == "Bicor Brain"])
 
-pval = cor0.test(estimate, kappa = 29)
+compare.1 = compare
+compare.1[,2] = c(pacor.brain, bicor.brain)
 
-kappa2n(29, p = 2)
-
-
-brain.liv = bicorAndPvalue(pacor.brain_data, pacor.brain_data, use = 'pairwise.complete.obs')
-
-cor = cor2pcor(brain.liv$bicor)
-cor2 = pcor.shrink(pacor.brain_data)
+with(compare.1, qqplot(val[trt == "Bicor Brain"], val[trt == "PaCor Brain"]))
+abline(a = 0, b = 1)
 
 ```
-  
+
+### QQ Plots
+
+#### PACOR SSEC SCORE
+
+```{r, echo = FALSE, message = FALSE}
+
+### QQ PLOTS ###
+
+## BRAIN
+
+sec = pacor.ssec.brain.fin$ssec
+nsec = pacor.tens.ssec.brain.fin$ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = pacor.ssec.liver.fin$ssec
+nsec = pacor.tens.ssec.liver.fin$ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
+abline(a = 0, b = 1)
+
+```
+
+#### BICOR SSEC SCORE
+
+From QQ Plots.Rmd
+
+```{r, echo = FALSE, message = FALSE}
+
+## BRAIN
+
+sec = ts_Ssec_target_brain$Ssec
+nsec = tsns_Ssec_target_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = ts_Ssec_target_liver$Ssec
+nsec = tsns_Ssec_target_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
+abline(a = 0, b = 1)
+
+```
