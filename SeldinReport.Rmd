@@ -23,8 +23,8 @@ library(WGCNA)
 
 # Data Input
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 protein_liver = read.csv("Liver_WGCNA.csv")
 protein_brain = read.csv("Brain_WGCNA.csv")
 secreted_protein_brain = read.csv("Secreted_Brain.csv")
@@ -67,9 +67,11 @@ Previously compared Secreted Genes to Tissue-Specific Secreted Genes. For both o
 Below are the graphs for Tissue-Specific Secreted Genes and Tissue-Specific Non-Secreted Genes. These were both compared to full set of target genes. These also do not show a significant difference between the Ssec scores of Tissue-Specific Secreted and Tissue-Specific Non-Secreted. 
  
 
+
+
+```{r, echo = FALSE, message = FALSE, eval = FALSE}
 ## Comparing Tissue-Specific Secreted to Tissue-Specific Non-Secreted with reference group All Target Genes
 
-```{r, echo = FALSE, message = FALSE}
 # Calculate Ssec values: tissue-specific -> full
 #### TS ####
 ## BRAIN ##
@@ -147,7 +149,7 @@ tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
 ```
 
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 # Visualizations
 #hist(Ssec_brain$Ssec)
 #hist(ts_Ssec_brain$Ssec)
@@ -205,8 +207,8 @@ target_liver = target_liver[rownames(ts_protein_brain),]
 
 brain.liv = bicorAndPvalue(ts_protein_brain, target_liver, use = 'pairwise.complete.obs')
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 write.csv(brain.liv$p, "Bicor_brain.csv")
 # brain.liv$p
 
@@ -231,8 +233,8 @@ target_brain = target_brain[rownames(ts_protein_liver),]
 liv.brain = bicorAndPvalue(ts_protein_liver, target_brain, use = 'pairwise.complete.obs')
 # brain.liv$p
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 write.csv(liv.brain$p, "Bicor_liver.csv")
 
 scores = rowSums(-log(liv.brain$p))
@@ -284,13 +286,13 @@ tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
 #top_liver = head(ts_Ssec_liver[,1])
 #bot_liver = tail(ts_Ssec_liver[,1])
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
-write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
-write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")
-write.csv(tsns_Ssec_brain, "Target_TENSec_Ssec_brain.csv")
-write.csv(tsns_Ssec_liver, "Target_TENSec_Ssec_liver.csv")
+#write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
+#write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")
+#write.csv(tsns_Ssec_brain, "Target_TENSec_Ssec_brain.csv")
+#write.csv(tsns_Ssec_liver, "Target_TENSec_Ssec_liver.csv")
 
 
 ```
@@ -317,8 +319,8 @@ ggplot(compare.b, aes(val, color = trt)) +
   geom_density() +
   labs(title="Brain Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
 
-with(compare.b, qqplot(val[trt == "TSNS brain"], val[trt == "TSS brain"]))
-abline(a = 0, b = 1)
+#with(compare.b, qqplot(val[trt == "TSNS brain"], val[trt == "TSS brain"]))
+#abline(a = 0, b = 1)
 
 # Liver
 h1 = cbind(rep("TSNS liver", times = length(tsns_Ssec_liver$Ssec)), tsns_Ssec_liver$Ssec)
@@ -335,8 +337,62 @@ ggplot(compare.l, aes(val, color = trt)) +
   geom_density() +
   labs(title="Liver Ssec Distribution: Tissue-Specific Non-Secreted v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
 
-with(compare.l, qqplot(val[trt == "TSNS liver"], val[trt == "TSS liver"]))
+#with(compare.l, qqplot(val[trt == "TSNS liver"], val[trt == "TSS liver"]))
+#abline(a = 0, b = 1)
+
+```
+
+```{r, echo = FALSE}
+
+
+## BRAIN
+
+sec = ts_Ssec_brain$Ssec
+nsec = tsns_Ssec_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Brain Proteins"))
 abline(a = 0, b = 1)
+
+## LIVER
+
+sec = ts_Ssec_liver$Ssec
+nsec = tsns_Ssec_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
+abline(a = 0, b = 1)
+
 
 ```
 
@@ -352,7 +408,7 @@ wil.liver = coin::wilcox_test(val ~ trt, compare.l)
 
 ```
 
-```{r}
+```{r, eval = FALSE, echo = FALSE}
 # checking secreted
 
 
@@ -423,7 +479,7 @@ Using the same top and bottom proteins, the above graphs show the correlation fr
 
 Below, we have used methods outlined in Seldin (2018) to complete a permutation test for the Ssec values of particular proteins. We can see with the significant protein below, the observed value is far above the 95% confidence interval of the null distribution. Below that, a protein that had the lowest Ssec value is far BELOW the 95% confidence interval (0.974 to 0.996). What this means has yet to be determined. 
 
-```{r}
+```{r, echo = FALSE, eval = FALSE}
 # annotation
 
 anno_brain = sec_annot[sec_annot$ensembl_gene_id %in% top_brain,]
@@ -460,7 +516,7 @@ perm_test[,i] = Ssec_brain_perm[,2]
 } 
 ```
 
-```{r, echo = FALSE, warning = FALSE}
+```{r, echo = FALSE, warning = FALSE, eval = FALSE}
 
 setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 perm_test = read.csv("Permutation_Seldin_Report.csv")
@@ -484,9 +540,7 @@ write.csv(perm_test, "Permutation_Seldin_Report.csv")
 ```
 
 
-# still want to compare protein_brain, protein_liver- server
-
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval = FALSE}
 
 setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
@@ -529,9 +583,11 @@ ggplot(compare.l, aes(val, color = trt)) +
   labs(title="Liver Ssec Distribution: Full v. Tissue-Specific Secreted", x = "Ssec", y = "Density")
 
 ```
+
+
 # compare secreted to non-secreted
 
-```{r}
+```{r, echo = FALSE, eval = FALSE}
 
 #### Secreted ####
 ## BRAIN ##
@@ -661,7 +717,7 @@ wil.liver
 
 ```
 
-```{r}
+```{r, echo = FALSE, eval = FALSE}
 
 # random brain secreted genes
 
@@ -686,7 +742,7 @@ sample(secreted_protein_liver, size = 4, replace = FALSE)
 
 ```
 
-```{r}
+```{r, echo = FALSE, eval = FALSE}
 
 # QQ plot
 

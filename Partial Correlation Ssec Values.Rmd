@@ -25,8 +25,8 @@ library(WGCNA)
 library(tidyverse)
 
 ## DATA
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
 tes.brain = read.csv("TissueSpecific2_Protein_Brain.csv")
 tes.liver = read.csv("TissueSpecific2_Protein_Liver.csv")
@@ -53,131 +53,58 @@ tens.liver = fix.read.csv(tens.liver)
 
 library(GeneNet)
 
-## TES BRAIN ##
-
-target_liver = cbind(tes.liver, tens.liver) #merge instead
+target_liver = cbind(tes.liver, tens.liver) 
 target_liver = target_liver[rownames(tes.brain),]
-
-pacor.ssec.brain = c()
-
-for (i in 1:174)
-{
-  test = data.frame(tes.brain[,i], target_liver)
-  estimate = ggm.estimate.pcor(test, method = "static")
-  edge = network.test.edges(estimate) 
-  
-  # calculate ssec
-  
-  this = edge[edge$node1 == 1,]
-  score = sum(-log(this$pval))/length(target_liver)
- 
-  pacor.ssec.brain = c(pacor.ssec.brain, score)
-  
-  if (i == 1)
-  {
-    corr.pacorssec.brain = this$pcor
-    pval.pacorssec.brain = this$pval
-    max.min.brain = c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval))
-  } else {
-    corr.pacorssec.brain = cbind(corr.pacorssec.brain, this$pcor)
-    pval.pacorssec.brain = cbind(pval.pacorssec.brain, this$pval)
-    max.min.brain = cbind(max.min.brain, c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval)))
-  }
-}
-
-## TES LIVER ##
 
 target_brain = cbind(tes.brain, tens.brain)
 target_brain = target_brain[rownames(tes.liver),]
 
-pacor.ssec.liver = c()
-
-for (i in 1:35)
+partial.correlation = function(x, y)
 {
-  test = data.frame(tes.liver[,i], target_brain)
+  test = data.frame(x, y)
   estimate = ggm.estimate.pcor(test, method = "static") 
-  edge = network.test.edges(estimate) 
-  
-  # calculate ssec
+  edge = network.test.edges(estimate)
   
   this = edge[edge$node1 == 1,]
-  score = sum(-log(this$pval))/length(target_brain)
- 
-  pacor.ssec.liver = c(pacor.ssec.liver, score)
+  score = sum(-log(this$pval))/length(y)
   
-  if (i == 1)
-  {
-    corr.pacorssec.liver = this$pcor
-    pval.pacorssec.liver = this$pval
-    max.min.liver = c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval))
-  } else {
-    corr.pacorssec.liver = cbind(corr.pacorssec.liver, this$pcor)
-    pval.pacorssec.liver = cbind(pval.pacorssec.liver, this$pval)
-    max.min.liver = cbind(max.min.liver, c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval)))
-  }
+  return(score)
+  
 }
+
+pacor.ssec.brain = apply(tes.brain, 2, partial.correlation, y = target_liver)
+pacor.ssec.liver = apply(tes.liver, 2, partial.correlation, y = target_brain)
+
 
 pacor.ssec.brain.fin = data.frame(gene = colnames(tes.brain), ssec = pacor.ssec.brain)
 pacor.ssec.liver.fin = data.frame(gene = colnames(tes.liver), ssec = pacor.ssec.liver)
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
-#write.csv(pacor.ssec.brain.fin, "TES_PaCor_Ssec_brain.csv")
-#write.csv(pacor.ssec.liver.fin, "TES_PaCor_Ssec_liver.csv")
-write.csv(corr.pacorssec.brain, "Pacor_Brain_TES.csv")
-write.csv(corr.pacorssec.liver, "Pacor_Liver_TES.csv")
-write.csv(pval.pacorssec.brain, "Pacor.pval_Brain_TES.csv")
-write.csv(pval.pacorssec.liver, "Pacor.pval_Liver_TES.csv")
+write.csv(pacor.ssec.brain.fin, "TES_PaCor_Ssec_brain.csv")
+write.csv(pacor.ssec.liver.fin, "TES_PaCor_Ssec_liver.csv")
+#write.csv(corr.pacorssec.brain, "Pacor_Brain_TES.csv")
+#write.csv(corr.pacorssec.liver, "Pacor_Liver_TES.csv")
+#write.csv(pval.pacorssec.brain, "Pacor.pval_Brain_TES.csv")
+#write.csv(pval.pacorssec.liver, "Pacor.pval_Liver_TES.csv")
 
 ```
 
 ```{r, echo = FALSE, eval = FALSE}
 ### CALCULATION OF PACOR SSEC TENS ###
 
-## TENS BRAIN ##
+pacor.tens.ssec.brain = apply(tens.brain, 2, partial.correlation, y = target_liver)
+pacor.tens.ssec.liver = apply(tens.liver, 2, partial.correlation, y = target_brain)
 
-pacor.tens.ssec.brain = c()
-
-for (i in 1:2589)
-{
-  test = data.frame(tens.brain[,i], target_liver)
-  estimate = ggm.estimate.pcor(test, method = "static")
-  edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
-  
-  # calculate ssec
-  
-  this = edge[edge$node1 == 1,]
-  score = sum(-log(this$pval))/length(target_liver)
- 
-  pacor.tens.ssec.brain = c(pacor.tens.ssec.brain, score) 
-}
-
-## TENS LIVER ##
-
-pacor.tens.ssec.liver = c()
-
-for (i in 1:368)
-{
-  test = data.frame(tens.liver[,i], target_brain)
-  estimate = ggm.estimate.pcor(test, method = "static")
-  edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
-  
-  # calculate ssec
-  
-  this = edge[edge$node1 == 1,]
-  score = sum(-log(this$pval))/length(target_brain)
- 
-  pacor.tens.ssec.liver = c(pacor.tens.ssec.liver, score) 
-}
 
 pacor.tens.ssec.brain.fin = data.frame(gene = colnames(tens.brain), ssec = pacor.tens.ssec.brain)
 pacor.tens.ssec.liver.fin = data.frame(gene = colnames(tens.liver), ssec = pacor.tens.ssec.liver)
 
-setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
-#write.csv(pacor.tens.ssec.brain.fin, "TENS_PaCor_Ssec_brain.csv")
+write.csv(pacor.tens.ssec.brain.fin, "TENS_PaCor_Ssec_brain.csv")
 write.csv(pacor.tens.ssec.liver.fin, "TENS_PaCor_Ssec_liver.csv")
 
 ```
@@ -201,6 +128,7 @@ pacor.ssec.brain.fin = fix.read.csv(pacor.ssec.brain.fin)
 pacor.ssec.liver.fin = fix.read.csv(pacor.ssec.liver.fin)
 pacor.tens.ssec.brain.fin = fix.read.csv(pacor.tens.ssec.brain.fin)
 pacor.tens.ssec.liver.fin = fix.read.csv(pacor.tens.ssec.liver.fin)
+
 
 ```
 
@@ -623,5 +551,115 @@ this$val = as.numeric(this$val)
 
 with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
 abline(a = 0, b = 1)
+
+```
+
+
+```{r, echo = FALSE, eval = FALSE}
+
+target_liver = cbind(tes.liver, tens.liver) 
+target_liver = target_liver[rownames(tes.brain),]
+
+target_brain = cbind(tes.brain, tens.brain)
+target_brain = target_brain[rownames(tes.liver),]
+
+pacor.ssec.liver = c()
+
+for (i in 1:35)
+{
+  test = data.frame(tes.liver[,i], target_brain)
+  estimate = ggm.estimate.pcor(test, method = "static") 
+  edge = network.test.edges(estimate)
+  
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_brain)
+ 
+  pacor.ssec.liver = c(pacor.ssec.liver, score)
+  
+  if (i == 1)
+  {
+    corr.pacorssec.liver = this$pcor
+    pval.pacorssec.liver = this$pval
+    max.min.liver = c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval))
+  } else {
+    corr.pacorssec.liver = cbind(corr.pacorssec.liver, this$pcor)
+    pval.pacorssec.liver = cbind(pval.pacorssec.liver, this$pval)
+    max.min.liver = cbind(max.min.liver, c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval)))
+  }
+}
+
+pacor.ssec.brain = c()
+
+for (i in 1:174)
+{
+  test = data.frame(tes.brain[,i], target_liver)
+  estimate = ggm.estimate.pcor(test, method = "static")
+  edge = network.test.edges(estimate) 
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_liver)
+ 
+  pacor.ssec.brain = c(pacor.ssec.brain, score)
+  
+  if (i == 1)
+  {
+    corr.pacorssec.brain = this$pcor
+    pval.pacorssec.brain = this$pval
+    max.min.brain = c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval))
+  } else {
+    corr.pacorssec.brain = cbind(corr.pacorssec.brain, this$pcor)
+    pval.pacorssec.brain = cbind(pval.pacorssec.brain, this$pval)
+    max.min.brain = cbind(max.min.brain, c(max(this$pcor), min(this$pcor), max(this$pval), min(this$pval)))
+  }
+}
+
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+write.csv(corr.pacorssec.brain, "Pacor_Brain_TES.csv")
+write.csv(corr.pacorssec.liver, "Pacor_Liver_TES.csv")
+write.csv(pval.pacorssec.brain, "Pacor.pval_Brain_TES.csv")
+write.csv(pval.pacorssec.liver, "Pacor.pval_Liver_TES.csv")
+
+############################################################
+
+pacor.tens.ssec.brain = c()
+
+for (i in 1:2589)
+{
+  test = data.frame(tens.brain[,i], target_liver)
+  estimate = ggm.estimate.pcor(test, method = "static")
+  edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_liver)
+ 
+  pacor.tens.ssec.brain = c(pacor.tens.ssec.brain, score) 
+}
+
+## TENS LIVER ##
+
+pacor.tens.ssec.liver = c()
+
+for (i in 1:368)
+{
+  test = data.frame(tens.liver[,i], target_brain)
+  estimate = ggm.estimate.pcor(test, method = "static")
+  edge = network.test.edges(estimate) # pvalue may be fdr... :P, but i guess it doesn't matter??
+  
+  # calculate ssec
+  
+  this = edge[edge$node1 == 1,]
+  score = sum(-log(this$pval))/length(target_brain)
+ 
+  pacor.tens.ssec.liver = c(pacor.tens.ssec.liver, score) 
+}
 
 ```

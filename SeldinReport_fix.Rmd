@@ -1,0 +1,720 @@
+---
+title: "Seldin Report: Ssec Scores"
+author: "Angela Yoder"
+date: "`r Sys.Date()`"
+---
+
+**The goals of this program are:**
+
+1. Calculate Ssec values using biweight midcorrelation for TES Protein-Coding Genes
+  a. Plot the distribution of Ssec values, comparing TES to TENS
+  b. Plot the QQ plots of Ssec values, comparing TES to TENS
+  c. Find null distribution of Ssec values
+2. Select TES protein-coding genes to evaluate via enrichment analysis in MsigDB.Rmd
+  a. Plot target genes for the top TES protein-coding genes
+  
+This report will document the results of the fix implemented to the biweight midcorrelation calculation of Ssec scores. Liver and brain datasets were verified to be in the same strain order in this report.
+
+## Density Plots
+
+Below are the density plots comparing the distributions of tissue-exclusive, secreted (TES) protein-coding genes and tissue-exclusive, non-secreted (TENS) protein-coding genes for both brain and liver. 
+The plots for brain are fairly similar, however there is a slight bump at the right hand side of the plot where TES protein-coding genes have a higher density. 
+
+```{r echo=FALSE, message=FALSE}
+
+library(tidyverse)
+library(reshape2)
+library(WGCNA)
+#library(reshape)
+#library(ggplot2)
+
+# Data Input
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+protein_liver = read.csv("Liver_WGCNA.csv")
+protein_brain = read.csv("Brain_WGCNA.csv")
+secreted_protein_brain = read.csv("Secreted_Brain.csv")
+secreted_protein_liver = read.csv("Secreted_Liver.csv")
+notsecreted_protein_brain = read.csv("NotSecreted_Brain.csv")
+notsecreted_protein_liver = read.csv("NotSecreted_Liver.csv")
+sec_annot = read.csv("Sec_Annotation.csv")
+#tissuespec_protein_brain = read.csv("TissueSpecific_Protein_Brain.csv")
+#tissuespec_protein_liver = read.csv("TissueSpecific_Protein_Liver.csv")
+ts_protein_brain = read.csv("TissueSpecific2_Protein_Brain.csv")
+ts_protein_liver = read.csv("TissueSpecific2_Protein_Liver.csv")
+tsns_protein_brain = read.csv("NSTissueSpecific_Protein_Brain.csv")
+tsns_protein_liver = read.csv("NSTissueSpecific_Protein_Liver.csv")
+
+fix.read.csv = function(x)
+{
+  names = x[,1]
+  gee = x[,2:dim(x)[2]]
+  rownames(gee) = names
+  return(gee)
+}
+
+protein_liver = fix.read.csv(protein_liver)
+protein_brain = fix.read.csv(protein_brain)
+secreted_protein_brain = fix.read.csv(secreted_protein_brain)
+secreted_protein_liver = fix.read.csv(secreted_protein_liver)
+notsecreted_protein_brain = fix.read.csv(notsecreted_protein_brain)
+notsecreted_protein_liver = fix.read.csv(notsecreted_protein_liver)
+sec_annot = fix.read.csv(sec_annot)
+#tissuespec_protein_brain = fix.read.csv(tissuespec_protein_brain)
+#tissuespec_protein_liver = fix.read.csv(tissuespec_protein_liver)
+ts_protein_brain = fix.read.csv(ts_protein_brain)
+ts_protein_liver = fix.read.csv(ts_protein_liver)
+tsns_protein_brain = fix.read.csv(tsns_protein_brain)
+tsns_protein_liver = fix.read.csv(tsns_protein_liver)
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+# Calculate Ssec values: tissue-specific -> s tissue-specific
+#### TS ####
+## BRAIN ##
+target_liver = cbind(ts_protein_liver, tsns_protein_liver)
+target_liver = target_liver[rownames(ts_protein_brain),]
+
+brain.liv = bicorAndPvalue(ts_protein_brain, target_liver, use = 'pairwise.complete.obs')
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(brain.liv$p, "Bicor_brain.csv")
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+ts_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+top_brain = head(ts_Ssec_brain[,1])
+bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+target_brain = cbind(ts_protein_brain, tsns_protein_brain)
+target_brain = target_brain[rownames(ts_protein_liver),]
+
+liv.brain = bicorAndPvalue(ts_protein_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(liv.brain$p, "Bicor_liver.csv")
+
+scores = rowSums(-log(liv.brain$p))
+
+ts_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+top_liver = head(ts_Ssec_liver[,1])
+bot_liver = tail(ts_Ssec_liver[,1])
+
+#### TSNS ####
+# ns tissue-specific -> ns tissue-specific
+## BRAIN ##
+
+brain.liv.c = bicorAndPvalue(tsns_protein_brain, target_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv.c$p))
+
+tsns_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+#top_brain = head(tsns_Ssec_brain[,1])
+#bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+liv.brain.c = bicorAndPvalue(tsns_protein_liver, target_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain.c$p))
+
+tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(target_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+#top_liver = head(ts_Ssec_liver[,1])
+#bot_liver = tail(ts_Ssec_liver[,1])
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
+write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")
+write.csv(tsns_Ssec_brain, "Target_TENSec_Ssec_brain.csv")
+write.csv(tsns_Ssec_liver, "Target_TENSec_Ssec_liver.csv")
+
+
+```
+
+
+```{r, echo = FALSE}
+# Visualizations
+#hist(Ssec_brain$Ssec)
+#hist(ts_Ssec_brain$Ssec)
+
+# Ssec distribtions TSNS v. TS, brain and liver
+#Brain
+h1 = cbind(rep("TENS brain", times = length(tsns_Ssec_brain$Ssec)), tsns_Ssec_brain$Ssec)
+h2 = cbind(rep("TES brain", times = length(ts_Ssec_brain$Ssec)), ts_Ssec_brain$Ssec)
+
+compare.b = rbind(h1, h2)
+colnames(compare.b) = c("trt", "val")
+compare.b = as.data.frame(compare.b)
+compare.b$trt = as.factor(compare.b$trt)
+compare.b$val = as.numeric(compare.b$val)
+
+
+ggplot(compare.b, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Brain Ssec Distribution: Tissue-Exclusive Non-Secreted v. Tissue-Exclusive Secreted", x = "Ssec", y = "Density")
+
+with(compare.b, qqplot(val[trt == "TENS brain"], val[trt == "TES brain"]))
+abline(a = 0, b = 1)
+
+```
+
+## Histograms
+
+```{r, echo = FALSE}
+
+c1 = rgb(173,216,230,max = 255, alpha = 80, names = "lt.blue")
+c2 = rgb(255,192,203, max = 255, alpha = 80, names = "lt.pink")
+
+sec = hist(ts_Ssec_brain$Ssec, plot = FALSE) 
+nsec = hist(tsns_Ssec_brain$Ssec, plot = FALSE) 
+
+plot(nsec, col = c1) 
+plot(sec, col = c2, add = TRUE) 
+
+sec = hist(ts_Ssec_liver$Ssec, plot = FALSE) 
+nsec = hist(tsns_Ssec_liver$Ssec, plot = FALSE) 
+
+plot(nsec, col = c1) 
+plot(sec, col = c2, add = TRUE) 
+
+```
+
+The plots for liver differ more dramatically, likely due to the small sample size for TES protein-coding genes in the liver. We continue to see a small bump in the lower right that may be promising.
+
+```{r, echo = FALSE}
+
+# Liver
+h1 = cbind(rep("TENS liver", times = length(tsns_Ssec_liver$Ssec)), tsns_Ssec_liver$Ssec)
+h2 = cbind(rep("TES liver", times = length(ts_Ssec_liver$Ssec)), ts_Ssec_liver$Ssec)
+
+compare.l = rbind(h1, h2)
+colnames(compare.l) = c("trt", "val")
+compare.l = as.data.frame(compare.l)
+compare.l$trt = as.factor(compare.l$trt)
+compare.l$val = as.numeric(compare.l$val)
+
+
+ggplot(compare.l, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Liver Ssec Distribution: Tissue-Exclusive Non-Secreted v. Tissue-Exclusive Secreted", x = "Ssec", y = "Density")
+
+with(compare.l, qqplot(val[trt == "TENS liver"], val[trt == "TES liver"]))
+abline(a = 0, b = 1)
+
+```
+
+```{r, echo = FALSE}
+
+qqplotAnnot = function(x, y,
+                       probs=c(0.001, 0.01, 0.1, 0.9, 0.99, 0.999),
+                       ...)
+{
+  qqplot(
+    x,
+    y,
+    pch=16, cex=0.5,
+    ...
+  )
+  abline(0, 1, col="red")
+
+  q_y = quantile(y, probs=probs, na.rm=TRUE)
+  q_x = quantile(x, probs=probs, na.rm=TRUE)
+
+  points(q_x, q_y, col="grey", cex=0.6)
+  text(q_x, q_y, label=paste0(probs*100, "%"), pos=1, cex=0.8, col="grey")
+}
+
+qqplotAnnot(tsns_Ssec_brain$Ssec, ts_Ssec_brain$Ssec,
+            main = "QQ-plot, Liver x adipose",
+            xlab = "Non-secreted factor Ssec (-ln p)",
+            ylab = "Secreted factor Ssec (-ln p)"
+)
+
+qqplotAnnot(tsns_Ssec_liver$Ssec, ts_Ssec_liver$Ssec,
+            main = "QQ-plot, Liver x adipose",
+            xlab = "Non-secreted factor Ssec (-ln p)",
+            ylab = "Secreted factor Ssec (-ln p)"
+)
+
+
+```
+
+## QQ Plots
+
+The following are the QQ plots comparing the quantiles of Ssec scores for TES protein-coding genes and TENS protein-coding genes. 
+In the plot for brain, we can see that the points follow the line fairly closely, with three points slightly above the null line. In the plot for liver, there is a pretty substantial dip of points below the null line, with no points above the line. 
+
+```{r, echo = FALSE}
+################### QQ PLOTS #########################
+
+## BRAIN
+
+sec = ts_Ssec_brain$Ssec
+nsec = tsns_Ssec_brain$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Brain Proteins"))
+abline(a = 0, b = 1)
+
+## LIVER
+
+sec = ts_Ssec_liver$Ssec
+nsec = tsns_Ssec_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Liver Proteins"))
+abline(a = 0, b = 1)
+
+
+```
+
+## Permutation Test
+
+Below, we have used methods outlined in Seldin (2018) to complete a permutation test for the Ssec values of particular proteins. We can see with the significant protein below, the observed value is far above the 95% confidence interval of the null distribution. Below that, a protein that had the lowest Ssec value is far BELOW the 95% confidence interval (0.974 to 0.996).  
+
+
+```{r, echo = FALSE, warning = FALSE, eval = FALSE}
+
+#permute strain names in target tissue array
+# bicor> pval> Ssec val
+# repeat 1000- compare observed value to mean of permuted values
+
+permy = function(target_protein, tes_protein_ssec, tes_protein_protein)
+{
+  perm_test = matrix(NA, ncol = 1000, nrow = nrow(tes_protein_ssec))
+  perm_test = as.data.frame(perm_test)
+  rownames(perm_test) = tes_protein_ssec[,1]
+
+  for (i in 1:1000)
+  {
+  
+    perm = sample(rownames(target_protein), size =  length(rownames(target_protein)), replace = FALSE)
+    target_protein = target_protein[perm,]
+
+    brain.liv = bicorAndPvalue(tes_protein_protein, target_protein, use = 'pairwise.complete.obs')
+
+    scores = rowSums(-log(brain.liv$p))
+
+    Ssec_perm = data.frame(Gene_symbol = names(scores), score = scores) %>%
+     #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+     mutate(Ssec = score / length(colnames(target_protein))) %>%
+     dplyr::select(-score)
+     #arrange(desc(Ssec))
+
+    perm_test[,i] = Ssec_perm[,2]
+  } 
+
+  return(perm_test)
+}
+
+perm_test.b = permy(target_liver, ts_Ssec_brain, ts_protein_brain)
+perm_test.l = permy(target_brain, ts_Ssec_liver, ts_protein_liver)
+
+conf.int = function(x)
+{
+  se = sd(x)/sqrt(length(x))
+  upper = mean(x) + (se * 1.96)
+  lower = mean(x) - (se * 1.96)
+  
+  return(c(lower, upper))
+}
+
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#write.csv(perm_test, "Permutation_Seldin_Report.csv")
+
+```
+
+```{r, echo = FALSE, warning = FALSE, eval = FALSE}
+
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#perm_test = read.csv("Permutation_Seldin_Report.csv")
+#perm_test= fix.read.csv(perm_test)
+
+test_top_b = perm_test.b[rownames(perm_test.b) == top_brain[1],]
+true = ts_Ssec_brain[ts_Ssec_brain$Gene_symbol == top_brain[1],]
+
+
+hist(as.numeric(test_top_b), main = "Null Ssec Distribution for Top Gene: Brain", sub = paste("Confidence Interval:", round(conf.int(as.numeric(test_top_b))[1], 2), round(conf.int(as.numeric(test_top_b))[2],2)), xlab = "Ssec Score", xlim = c(0, true$Ssec))
+abline(v = true, col = "red")
+
+
+test_bot_b = perm_test.b[rownames(perm_test.b) == bot_brain[1],]
+true = ts_Ssec_brain[ts_Ssec_brain$Gene_symbol == bot_brain[1],]
+hist(as.numeric(test_bot_b), main = "Null Ssec Distribution for Bottom Gene: Brain", sub = paste("Confidence Interval:", round(conf.int(as.numeric(test_bot_b))[1], 2), round(conf.int(as.numeric(test_bot_b))[2], 2)), xlab = "Ssec Score")
+abline(v = true, col = "red")
+
+test_top_l = perm_test.l[rownames(perm_test.l) == top_liver[1],]
+true = ts_Ssec_liver[ts_Ssec_liver$Gene_symbol == top_liver[1],]
+hist(as.numeric(test_top_l), main = "Null Ssec Distribution for Top Gene: Liver", sub = paste("Confidence Interval:", round(conf.int(as.numeric(test_top_l))[1], 2), round(conf.int(as.numeric(test_top_l))[2], 2)), xlab = "Ssec Score")
+abline(v = true, col = "red")
+
+
+test_bot_l = perm_test.l[rownames(perm_test.l) == bot_liver[1],]
+true = ts_Ssec_liver[ts_Ssec_liver$Gene_symbol == bot_liver[1],]
+hist(as.numeric(test_bot_l), main = "Null Ssec Distribution for Bottom Gene: Liver", sub = paste("Confidence Interval:", round(conf.int(as.numeric(test_bot_l))[1], 2), round(conf.int(as.numeric(test_bot_l))[2]), 2), xlab = "Ssec Score")
+abline(v = true, col = "red")
+
+```
+
+## Selecting Relavent TES Protein-Coding Genes
+
+Because our QQ plots are less than satisfactory, we will determine our top Ssec scores by selecting all TES protein-coding genes that have a higher Ssec score than the 95th percentile of Ssec scores for TENS protein-coding genes in the respective tissues. This results in the following six genes for brain and one gene for liver. 
+
+```{r, echo = FALSE}
+
+brain_quant = quantile(tsns_Ssec_brain$Ssec, probs = 0.95)
+liver_quant = quantile(tsns_Ssec_liver$Ssec, probs = 0.95)
+
+selected_brain = ts_Ssec_brain[ts_Ssec_brain$Ssec > brain_quant,]
+selected_liver = ts_Ssec_liver[ts_Ssec_liver$Ssec > liver_quant,]
+
+### Plots ###
+
+# target genes
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+bicor.brain = read.csv("Bicor_brain.csv")
+bicor.liver = read.csv("Bicor_liver.csv")
+bicor.brain = fix.read.csv(bicor.brain)
+bicor.liver = fix.read.csv(bicor.liver)
+
+s.brain_1 = bicor.brain[rownames(bicor.brain) == selected_brain$Gene_symbol[1], ]
+top.target.brain_1 = colnames(s.brain_1)[s.brain_1[1,] %in% sort(as.numeric(s.brain_1))[1:4]]
+
+s.brain_2 = bicor.brain[rownames(bicor.brain) == selected_brain$Gene_symbol[2], ]
+top.target.brain_2 = colnames(s.brain_2)[s.brain_2[1,] %in% sort(as.numeric(s.brain_2))[1:4]]
+
+s.brain_3 = bicor.brain[rownames(bicor.brain) == selected_brain$Gene_symbol[3], ]
+top.target.brain_3 = colnames(s.brain_3)[s.brain_3[1,] %in% sort(as.numeric(s.brain_3))[1:4]]
+
+s.brain_4 = bicor.brain[rownames(bicor.brain) == selected_brain$Gene_symbol[4], ]
+top.target.brain_4 = colnames(s.brain_4)[s.brain_4[1,] %in% sort(as.numeric(s.brain_4))[1:4]]
+
+s.brain_5 = bicor.brain[rownames(bicor.brain) == selected_brain$Gene_symbol[5], ]
+top.target.brain_5 = colnames(s.brain_5)[s.brain_5[1,] %in% sort(as.numeric(s.brain_5))[1:4]]
+
+s.brain_6 = bicor.brain[rownames(bicor.brain) == selected_brain$Gene_symbol[6], ]
+top.target.brain_6 = colnames(s.brain_6)[s.brain_6[1,] %in% sort(as.numeric(s.brain_6))[1:4]]
+
+
+s.liver_1 = bicor.liver[rownames(bicor.liver) == selected_liver$Gene_symbol[1], ]
+top.target.liver_1 = colnames(s.liver_1)[s.liver_1[1,] %in% sort(as.numeric(s.liver_1))[1:4]]
+
+```
+
+```{r, echo = FALSE}
+## SUMMARY TABLE
+
+
+
+names_brain = c("Cntn4", "Tnn", "Bmp3", "Wnt3", "Lamc3", "Cbln1")
+names_liver = c("Kiss1")
+
+s.brain_1top = s.brain_1[s.brain_1 < 0.05]
+s.brain_2top = s.brain_2[s.brain_2 < 0.05]
+s.brain_3top = s.brain_3[s.brain_3 < 0.05]
+s.brain_4top = s.brain_4[s.brain_4 < 0.05]
+s.brain_5top = s.brain_5[s.brain_5 < 0.05]
+s.brain_6top = s.brain_6[s.brain_6 < 0.05]
+
+numtarget_brain = c(s.brain_1top, s.brain_2top, s.brain_3top, s.brain_4top, s.brain_5top, s.brain_6top)
+
+s.liver_1top = s.liver_1[s.liver_1 < 0.05]
+
+fin_brain = data.frame(names_brain, selected_brain[,2], numtarget_brain)
+
+fin_liver = data.frame(names_liver, selected_liver[,2], s.liver_1top)
+
+knitr::kable(fin_brain, caption = "TES Protein-Coding Genes in the Brain that have higher Ssec scores than the 95th quantile of TENS protein-Coding Genes from the Brain")
+
+knitr::kable(fin_liver, caption = "TES Protein-Coding Genes in the Liver that have higher Ssec scores than the 95th quantile of TENS Protein-Coding Genes fromt the Liver")
+
+```
+
+
+```{r, echo = FALSE}
+
+# plotting RNA expression
+
+better.plot = function (protein, selected, target, top, tissue, not.tissue)
+{
+  par(mfrow = c(2,2))
+  for (i in 1:4)
+  {
+    plot(protein[, colnames(protein) == selected], target[, colnames(target) == top[i]], xlab = paste("TES", tissue, selected), ylab = paste("Target", not.tissue, top[i]))
+  }
+}
+```
+
+
+To give a rough estimate of the influence these TES protein-coding genes have in the target tissue, we have plotted the expression of the top TES protein-coding gene against the expression of the four most significantly correlated target genes for each of our top genes. We hope to see defined slope that will indicate the influence these genes have. 
+
+### Highest Ssec Score TES Brain and its 4 most correlated liver genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_brain, selected_brain$Gene_symbol[1], target_liver, top.target.brain_1, "brain", "liver")
+
+```
+
+
+### Second Highest Ssec Score TES Brain and its 4 most correlated liver genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_brain, selected_brain$Gene_symbol[2], target_liver, top.target.brain_2, "brain", "liver")
+
+```
+
+### Third Highest Ssec Score TES Brain and its 4 most correlated liver genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_brain, selected_brain$Gene_symbol[3], target_liver, top.target.brain_3, "brain", "liver")
+
+```
+
+### Fourth Highest Ssec Score TES Brain and its 4 most correlated liver genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_brain, selected_brain$Gene_symbol[4], target_liver, top.target.brain_4, "brain", "liver")
+
+```
+
+### Fifth Highest Ssec Score TES Brain and its 4 most correlated liver genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_brain, selected_brain$Gene_symbol[5], target_liver, top.target.brain_5, "brain", "liver")
+
+```
+
+### Sixth Highest Ssec Score TES Brain and its 4 most correlated liver genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_brain, selected_brain$Gene_symbol[6], target_liver, top.target.brain_6, "brain", "liver")
+
+```
+
+### Highest Ssec Score TES Liver and its 4 most correlated brain genes
+
+```{r, echo = FALSE}
+better.plot(ts_protein_liver, selected_liver$Gene_symbol[1], target_brain, top.target.liver_1, "liver", "brain")
+
+```
+
+#### Appendix: TES v. All target tissue genes
+
+```{r, echo = FALSE, message = FALSE, eval = FALSE}
+## Comparing Tissue-Specific Secreted to Tissue-Specific Non-Secreted with reference group All Target Genes
+
+# Calculate Ssec values: tissue-specific -> full
+#### TS ####
+## BRAIN ##
+protein_liver = protein_liver[rownames(ts_protein_brain),]
+
+brain.liv = bicorAndPvalue(ts_protein_brain, protein_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+ts_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+top_brain = head(ts_Ssec_brain[,1])
+bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+protein_brain = protein_brain[rownames(ts_protein_liver),]
+
+liv.brain = bicorAndPvalue(ts_protein_liver, protein_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain$p))
+
+ts_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+top_liver = head(ts_Ssec_liver[,1])
+bot_liver = tail(ts_Ssec_liver[,1])
+
+#### TSNS ####
+# ns tissue-specific -> full
+## BRAIN ##
+
+brain.liv = bicorAndPvalue(tsns_protein_brain, protein_liver, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(brain.liv$p))
+
+tsns_Ssec_brain = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_liver))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_brain = Ssec_brain[Ssec_brain[,1] %in% colnames(ts_protein_brain),]
+#top_brain = head(tsns_Ssec_brain[,1])
+#bot_brain = tail(ts_Ssec_brain[,1])
+
+
+## LIVER ##
+
+liv.brain = bicorAndPvalue(tsns_protein_liver, protein_brain, use = 'pairwise.complete.obs')
+# brain.liv$p
+
+scores = rowSums(-log(liv.brain$p))
+
+tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
+  #filter(Gene_symbol %in% sec_annot$ensembl_gene_id) %>%
+  mutate(Ssec = score / length(colnames(protein_brain))) %>%
+  dplyr::select(-score) %>%
+  arrange(desc(Ssec))
+
+#ts_Ssec_liver = Ssec_liver[Ssec_liver[,1] %in% colnames(ts_protein_liver),]
+#top_liver = head(ts_Ssec_liver[,1])
+#bot_liver = tail(ts_Ssec_liver[,1])
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+# Visualizations
+#hist(Ssec_brain$Ssec)
+#hist(ts_Ssec_brain$Ssec)
+
+# Ssec distribtions TSNS v. TS, brain and liver
+#Brain
+h1 = cbind(rep("TENS brain", times = length(tsns_Ssec_brain$Ssec)), tsns_Ssec_brain$Ssec)
+h2 = cbind(rep("TES brain", times = length(ts_Ssec_brain$Ssec)), ts_Ssec_brain$Ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Brain Ssec Distribution: Tissue-Exclusive Non-Secreted v. Tissue-Exclusive Secreted", x = "Ssec", y = "Density")
+
+# Liver
+h1 = cbind(rep("TENS liver", times = length(tsns_Ssec_liver$Ssec)), tsns_Ssec_liver$Ssec)
+h2 = cbind(rep("TES liver", times = length(ts_Ssec_liver$Ssec)), ts_Ssec_liver$Ssec)
+
+compare = rbind(h1, h2)
+colnames(compare) = c("trt", "val")
+compare = as.data.frame(compare)
+compare$trt = as.factor(compare$trt)
+compare$val = as.numeric(compare$val)
+
+
+ggplot(compare, aes(val, color = trt)) + 
+  geom_density() +
+  labs(title="Liver Ssec Distribution: Tissue-Exclusive Non-Secreted v. Tissue-Exclusive Secreted", x = "Ssec", y = "Density")
+
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+
+sec = ts_Ssec_liver$Ssec
+nsec = tsns_Ssec_liver$Ssec
+
+cdf = ecdf(sec)
+
+quant = c()
+for (i in sec)
+{
+  gee = cdf(i)
+  quant = c(quant, gee)
+}
+
+vals.nsec = quantile(nsec, probs = quant)
+
+this = cbind(c(rep("Secreted", times = length(sec)), rep("Not Secreted", times = length(vals.nsec))), c(sec, vals.nsec))
+colnames(this) = c("trt", "val")
+this = as.data.frame(this)
+this$val = as.numeric(this$val)
+
+with(this, qqplot(val[trt == "Not Secreted"], val[trt == "Secreted"], xlab = "Not Secreted", ylab = "Secreted", main = "QQ Plot for Tissue-Exclusive Brain Proteins"))
+abline(a = 0, b = 1)
+
+```
+
+
