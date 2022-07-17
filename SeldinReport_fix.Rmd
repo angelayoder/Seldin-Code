@@ -159,12 +159,12 @@ tsns_Ssec_liver = data.frame(Gene_symbol = names(scores), score = scores) %>%
 #bot_liver = tail(ts_Ssec_liver[,1])
 
 #setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
-write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
-write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")
-write.csv(tsns_Ssec_brain, "Target_TENSec_Ssec_brain.csv")
-write.csv(tsns_Ssec_liver, "Target_TENSec_Ssec_liver.csv")
+#write.csv(ts_Ssec_brain, "Target_TESec_Ssec_brain.csv")
+#write.csv(ts_Ssec_liver, "Target_TESec_Ssec_liver.csv")
+#write.csv(tsns_Ssec_brain, "Target_TENSec_Ssec_brain.csv")
+#write.csv(tsns_Ssec_liver, "Target_TENSec_Ssec_liver.csv")
 
 
 ```
@@ -474,10 +474,20 @@ top.target.liver_1 = colnames(s.liver_1)[s.liver_1[1,] %in% sort(as.numeric(s.li
 ```{r, echo = FALSE}
 ## SUMMARY TABLE
 
-
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+te.sec.b_table = read.csv("eQTL_BrainTESec_added_table.csv")
+te.sec.l_table = read.csv("eQTL_LiverTESec_added_table.csv")
+te.sec.b_table = fix.read.csv(te.sec.b_table)
+te.sec.l_table = fix.read.csv(te.sec.l_table)
 
 names_brain = c("Cntn4", "Tnn", "Bmp3", "Wnt3", "Lamc3", "Cbln1")
 names_liver = c("Kiss1")
+
+eqtl.brain = te.sec.b_table[te.sec.b_table$RNAseq.Gene.Name %in% names_brain,]
+eqtl.brain = eqtl.brain[selected_brain$Gene_symbol,]
+
+eqtl.liver = te.sec.l_table[te.sec.l_table$RNAseq.Gene.Name %in% names_liver,]
 
 s.brain_1top = s.brain_1[s.brain_1 < 0.05]
 s.brain_2top = s.brain_2[s.brain_2 < 0.05]
@@ -486,17 +496,23 @@ s.brain_4top = s.brain_4[s.brain_4 < 0.05]
 s.brain_5top = s.brain_5[s.brain_5 < 0.05]
 s.brain_6top = s.brain_6[s.brain_6 < 0.05]
 
-numtarget_brain = c(s.brain_1top, s.brain_2top, s.brain_3top, s.brain_4top, s.brain_5top, s.brain_6top)
+numtarget_brain = c(length(s.brain_1top), length(s.brain_2top), length(s.brain_3top), length(s.brain_4top), length(s.brain_5top), length(s.brain_6top))
 
 s.liver_1top = s.liver_1[s.liver_1 < 0.05]
 
-fin_brain = data.frame(names_brain, selected_brain[,2], numtarget_brain)
+fin_brain = data.frame(Gene = selected_brain$Gene_symbol, Gene_Symbol = names_brain, Ssec_Score = selected_brain[,2], Number_Target_Genes = numtarget_brain, eQTL_FDR = eqtl.brain$fdr, eQTL_pval = eqtl.brain$pval)
 
-fin_liver = data.frame(names_liver, selected_liver[,2], s.liver_1top)
+fin_liver = data.frame(Gene = selected_liver$Gene_symbol, Gene_Symbol = names_liver, Ssec_score = selected_liver[,2], Number_Target_Genes = length(s.liver_1top), eQTL_FDR = eqtl.liver$fdr, eQTL_pval = eqtl.liver$pval)
 
 knitr::kable(fin_brain, caption = "TES Protein-Coding Genes in the Brain that have higher Ssec scores than the 95th quantile of TENS protein-Coding Genes from the Brain")
 
 knitr::kable(fin_liver, caption = "TES Protein-Coding Genes in the Liver that have higher Ssec scores than the 95th quantile of TENS Protein-Coding Genes fromt the Liver")
+
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+write.csv(fin_brain, "Summary_Table_topSsec_brain.csv")
+write.csv(fin_liver, "Summary_Table_topSsec_liver.csv")
 
 ```
 
