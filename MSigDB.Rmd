@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
 3.  Use clusterProfiler to do pathway analysis
 
 For our gene set enrichment analysis (GSEA), we will be using the data resource MSigDB (Molecular Signatures Database), "a collection of annotated gene sets for use with GSEA software." This dataset was used in conjunction with the GSEA R package clusterProfiler. 
-We identified our enrichment dataset via the function msigdbr from the msigdbr r package. The species was identified as "Rattus norvegicus." msigdbr has access to multiple collections, including hallmark gene sets (H), and eight different supplementary gene sets (C1 to C8). In this analysis, we did not exclude any of the collections. 
+We identified our enrichment dataset via the function msigdbr from the msigdbr r package. The species was identified as "Rattus norvegicus." msigdbr has access to multiple collections, including hallmark gene sets (H), and eight different supplementary gene sets (C1 to C8). In this analysis, we focused on the Hallmark Sets (H), KEGG Pathways (part of C2), and GO: Biological Processes (part of C5). 
 
 ```{r, echo = FALSE}
 library(msigdbr)
@@ -61,7 +61,7 @@ top.brain = tesec_brain[1:6,]
 top.liver = tesec_liver[1,]
 
 ```
-We began by identifying the top five brain and liver tissue-exclusive, secreted (TES) protein-coding genes, as identified by Ssec score. We then identified the target tissue transcripts that were most significantly associated with the top TES protein-coding genes (p-value < 0.05). These will be the gene sets for which we will identify annotations. This results in 138 liver genes that are associated with TES protein-coding genes from the brain, and 935 brain genes that are associated with TES protein-coding genes from the liver. 
+The top Tissue-Exclusive, Secreted (TES) protein-coding genes were determined in SeldinReport_fix.Rmd by determining which TES protein-coding genes had Ssec scores higher than the 95th percentile of Ssec scores from tissue-exclusive, non-secreted (TENS) protein-coding genes. We then identified the target tissue transcripts that were most significantly associated with the top TES protein-coding genes (p-value < 0.05). These will be the gene sets for which we will identify annotations.  
 
 ```{r, echo = FALSE}
 
@@ -106,9 +106,17 @@ num.target.liver = data.frame(top.liver[,1], num.liver)
 colnames(num.target.brain) = c("TES PC from Brain", "Number of Target Genes in Liver")
 colnames(num.target.liver) = c("TES PC from Liver", "Number of Target Genes in Brain")
 
-knitr::kable(num.target.brain, caption = "Number of Target Genes in the Liver associated with TES Protein-Coding Genes from the Brain")
+#knitr::kable(num.target.brain, caption = "Number of Target Genes in the Liver associated with TES Protein-Coding Genes from the Brain")
 
-knitr::kable(num.target.liver, caption = "Number of Target Genes in the Brain associated with TES Protein-Coding Genes from the Liver")
+#knitr::kable(num.target.liver, caption = "Number of Target Genes in the Brain associated with TES Protein-Coding Genes from the Liver")
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+summ.brain = read.csv("Summary_Table_topSsec_brain.csv")
+summ.liver = read.csv("Summary_Table_topSsec_liver.csv")
+
+knitr::kable(summ.brain, caption = "Summary of Top Ssec Scores for Brain")
+knitr::kable(summ.liver, caption = "Summary of Top Ssec Score for Liver")
 
 ```
 
@@ -142,7 +150,7 @@ get_entrez = getBM(attributes=c("ensembl_gene_id",
                             "entrezgene_id"),
                  filters = 'biotype',
                  values = "protein_coding",
-                 mart = ensembl)
+                 mart = ensembl.miss)
 
 
 entrez_brain.1= get_entrez[get_entrez$ensembl_gene_id %in% combine.brain,]
@@ -157,12 +165,12 @@ entrez_liver.1 = get_entrez[get_entrez$ensembl_gene_id %in% combine.liver,]
 missing_b = combine.brain[combine.brain %!in% entrez_brain.1$ensembl_gene_id]
 # 15 missing TES : "ENSRNOG00000047739" "ENSRNOG00000008563" "ENSRNOG00000009140" "ENSRNOG00000038437" "ENSRNOG00000034130" "ENSRNOG00000003887" "ENSRNOG00000007374" "ENSRNOG00000013441" "ENSRNOG00000003891" "ENSRNOG00000038980" "ENSRNOG00000013228" "ENSRNOG00000038150" "ENSRNOG00000049171" "ENSRNOG00000011074" "ENSRNOG00000050172"
 
-# 28 missing target : "ENSRNOG00000003498" "ENSRNOG00000047079" "ENSRNOG00000053527" "ENSRNOG00000057548" "ENSRNOG00000033130" "ENSRNOG00000042543" "ENSRNOG00000046529" "ENSRNOG00000049727" "ENSRNOG00000050499" "ENSRNOG00000050885" "ENSRNOG00000051227" "ENSRNOG00000052192" "ENSRNOG00000054524" "ENSRNOG00000061059" "ENSRNOG00000020805" "ENSRNOG00000003648" "ENSRNOG00000047785" "ENSRNOG00000056194" "ENSRNOG00000013410" "ENSRNOG00000049009" "ENSRNOG00000057089" "ENSRNOG00000059007" "ENSRNOG00000061217" "ENSRNOG00000003054" "ENSRNOG00000042197" "ENSRNOG00000047520" "ENSRNOG00000047821" "ENSRNOG00000048017"
+# 66 missing target :  ENSRNOG00000031343, ENSRNOG00000037928, ENSRNOG00000046284, ENSRNOG00000046386, ENSRNOG00000047103, ENSRNOG00000052003, ENSRNOG00000056194, ENSRNOG00000057089, ENSRNOG00000058753, ENSRNOG00000058824, ENSRNOG00000020628, ENSRNOG00000030575, ENSRNOG00000037495, ENSRNOG00000042197, ENSRNOG00000043176, ENSRNOG00000045991, ENSRNOG00000046572, ENSRNOG00000047308, ENSRNOG00000047560, ENSRNOG00000048017, ENSRNOG00000049009, ENSRNOG00000049299, ENSRNOG00000049315, ENSRNOG00000050243, ENSRNOG00000053899, ENSRNOG00000055193, ENSRNOG00000055375, ENSRNOG00000055620, ENSRNOG00000058460, ENSRNOG00000059007, ENSRNOG00000059199, ENSRNOG00000060451, ENSRNOG00000013464, ENSRNOG00000033245, ENSRNOG00000046696, ENSRNOG00000047079, ENSRNOG00000047535, ENSRNOG00000048070, ENSRNOG00000048182, ENSRNOG00000050066, ENSRNOG00000050118, ENSRNOG00000050981, ENSRNOG00000056285, ENSRNOG00000057734, ENSRNOG00000058352, ENSRNOG00000060328, ENSRNOG00000003648, ENSRNOG00000042083, ENSRNOG00000057548, ENSRNOG00000061431, ENSRNOG00000033130, ENSRNOG00000042543, ENSRNOG00000046529, ENSRNOG00000049727, ENSRNOG00000050499, ENSRNOG00000003498, ENSRNOG00000039931, ENSRNOG00000040195, ENSRNOG00000047843, ENSRNOG00000050232, ENSRNOG00000050885, ENSRNOG00000051227, ENSRNOG00000054524, ENSRNOG00000058034, ENSRNOG00000013410, ENSRNOG00000046011
 
 missing_l = combine.liver[combine.liver %!in% entrez_liver.1$ensembl_gene_id]
 # 12 missing TES : "ENSRNOG00000020805" "ENSRNOG00000050499" "ENSRNOG00000049727" "ENSRNOG00000033130" "ENSRNOG00000042543" "ENSRNOG00000046529" "ENSRNOG00000013464" "ENSRNOG00000049515" "ENSRNOG00000013410" "ENSRNOG00000016535" "ENSRNOG00000033619" "ENSRNOG00000033245"
 
-# 116 missing target : "ENSRNOG00000038437" "ENSRNOG00000001057" "ENSRNOG00000006591" "ENSRNOG00000007705" "ENSRNOG00000008475" "ENSRNOG00000009241" "ENSRNOG00000019857" "ENSRNOG00000021533" "ENSRNOG00000028576" "ENSRNOG00000038976" "ENSRNOG00000043358" "ENSRNOG00000045720" "ENSRNOG00000045960" "ENSRNOG00000046838" "ENSRNOG00000049878" "ENSRNOG00000052459" "ENSRNOG00000053258" "ENSRNOG00000055404" "ENSRNOG00000056130" "ENSRNOG00000057009" "ENSRNOG00000057250" "ENSRNOG00000057522" "ENSRNOG00000057724" "ENSRNOG00000061051" "ENSRNOG00000009140" "ENSRNOG00000005665" "ENSRNOG00000006226" "ENSRNOG00000007219" "ENSRNOG00000008544" "ENSRNOG00000009835" "ENSRNOG00000010720" "ENSRNOG00000011640" "ENSRNOG00000014847" "ENSRNOG00000024726" "ENSRNOG00000028279" "ENSRNOG00000042321" "ENSRNOG00000042502" "ENSRNOG00000042971" "ENSRNOG00000042985" "ENSRNOG00000043382" "ENSRNOG00000045545" "ENSRNOG00000045767" "ENSRNOG00000045837" "ENSRNOG00000046212" "ENSRNOG00000046272" "ENSRNOG00000047890" "ENSRNOG00000048172" "ENSRNOG00000048322" "ENSRNOG00000048765" "ENSRNOG00000050134" "ENSRNOG00000054121" "ENSRNOG00000055892" "ENSRNOG00000056186" "ENSRNOG00000058047" "ENSRNOG00000058276" "ENSRNOG00000058766" "ENSRNOG00000058984" "ENSRNOG00000059734" "ENSRNOG00000060719" "ENSRNOG00000062048" "ENSRNOG00000002953" "ENSRNOG00000022107" "ENSRNOG00000042211" "ENSRNOG00000047780" "ENSRNOG00000061301" "ENSRNOG00000038150" "ENSRNOG00000038980" "ENSRNOG00000003395" "ENSRNOG00000006051" "ENSRNOG00000009917" "ENSRNOG00000010749" "ENSRNOG00000011856" "ENSRNOG00000012477" "ENSRNOG00000019958" "ENSRNOG00000021183" "ENSRNOG00000022919" "ENSRNOG00000027929" "ENSRNOG00000029837" "ENSRNOG00000031734" "ENSRNOG00000032206" "ENSRNOG00000033894" "ENSRNOG00000034287" "ENSRNOG00000037852" "ENSRNOG00000038184" "ENSRNOG00000039050" "ENSRNOG00000042516" "ENSRNOG00000042939" "ENSRNOG00000046844" "ENSRNOG00000047864" "ENSRNOG00000048722" "ENSRNOG00000049435" "ENSRNOG00000050378" "ENSRNOG00000056555" "ENSRNOG00000057059" "ENSRNOG00000057228" "ENSRNOG00000059539" "ENSRNOG00000060482" "ENSRNOG00000060898" "ENSRNOG00000062013" "ENSRNOG00000000060" "ENSRNOG00000005114" "ENSRNOG00000006320" "ENSRNOG00000009388" "ENSRNOG00000009635" "ENSRNOG00000020821" "ENSRNOG00000021302" "ENSRNOG00000023404" "ENSRNOG00000024678" "ENSRNOG00000046157" "ENSRNOG00000047724" "ENSRNOG00000049802" "ENSRNOG00000050511" "ENSRNOG00000057758" "ENSRNOG00000057852" "ENSRNOG00000058416" "ENSRNOG00000060181"
+# 34 missing target : "ENSRNOG00000007374" "ENSRNOG00000047739" "ENSRNOG00000000060" "ENSRNOG00000006051" "ENSRNOG00000008125" "ENSRNOG00000011369" "ENSRNOG00000012057" "ENSRNOG00000012086" "ENSRNOG00000012961" "ENSRNOG00000024149" "ENSRNOG00000025745" "ENSRNOG00000028114" "ENSRNOG00000029046" "ENSRNOG00000032206" "ENSRNOG00000038184" "ENSRNOG00000039197" "ENSRNOG00000040213" "ENSRNOG00000042602" "ENSRNOG00000042609" "ENSRNOG00000042788" "ENSRNOG00000042939" "ENSRNOG00000043120" "ENSRNOG00000047075" "ENSRNOG00000047740" "ENSRNOG00000048172" "ENSRNOG00000048358" "ENSRNOG00000049878" "ENSRNOG00000050511" "ENSRNOG00000051471" "ENSRNOG00000055889" "ENSRNOG00000056130" "ENSRNOG00000057009" "ENSRNOG00000057522" "ENSRNOG00000061301"
 
 
 #setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
@@ -174,10 +182,11 @@ write.csv(entrez_liver.1, "EntrezIds_liver.csv")
 
 ```{r, echo = FALSE}
 
-missingness = data.frame(dataset = c("TES Brain", "Sig Target Genes Brain", "TES Liver", "Sig Target Genes Liver"), missing = c(15, 28, 12, 116), total = c(174, 138, 35, 930))
+missingness = data.frame(dataset = c("TES Brain", "Sig Target Genes Brain", "TES Liver", "Sig Target Genes Liver"), missing = c(15, 66, 12, 34), total = c(174, 182, 35, 329))
 
 knitr::kable(missingness, caption = "Missing Ensembl IDs within Datasets")
 
+missing.tes.liver = c("ENSRNOG00000020805", "ENSRNOG00000050499", "ENSRNOG00000049727", "ENSRNOG00000033130", "ENSRNOG00000042543", "ENSRNOG00000046529", "ENSRNOG00000013464", "ENSRNOG00000049515", "ENSRNOG00000013410", "ENSRNOG00000016535", "ENSRNOG00000033619", "ENSRNOG00000033245")
 
 ```
 
@@ -185,31 +194,22 @@ knitr::kable(missingness, caption = "Missing Ensembl IDs within Datasets")
 
 ![Missing Gene: ENSRNOG00000013464](C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data/ENSRNOG00000013464_Ensembl.png)
 
+Of most concern were the 12 missing Ensembl IDs from the TES protein-coding genes in the liver (34% of total missing). We investigated further and found that these genes are still available in Ensembl databases, under different names. 
+
 ```{r, echo = FALSE, eval = FALSE}
 
-# duplicates
-adding = c()
-dup = c()
-for (i in entrez_tes.brain$ensembl_gene_id)
-{
-  if (i %in% adding)
-  {
-    dup = c(dup, i)
-  }
-  else
-  {
-    adding = c(adding, i)
-  }
-  
-}
+knitr::kable(missing.tes.liver, caption = "Missing TES Liver Ensembl IDs") 
 
-dup.entrez = entrez_tes.brain$entrezgene_id[entrez_tes.brain$ensembl_gene_id %in% dup]
-# there are 4 NAs in the brain dataset
-# there are 3 ensembl duplicates in brain dataset
-# there are 5 ensembl duplicates in liver dataset
+#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
 
+miss.tes.liver = read.csv("Missing_Ensembl_TES_Liver.txt")
+
+knitr::kable(miss.tes.liver, caption = "Ensembl ID History Converter")
 
 ```
+
+Additionally, significant target genes brain were found to have a high degree of missingness, with 36% missing. 
 
 ## Enrichment Analysis
 
@@ -496,6 +496,39 @@ these_1 = grep("GOBP", out.liver_C5[[1]][,1], value = TRUE)
 knitr::kable(out.liver_C5[[1]][out.liver_C5[[1]][,1] %in% these_1,], caption = "C5: GO Biological Processes Liver TES Protein-Coding Gene: ENSRNOG00000047481")
 
 ```
+
+### Cursory Googling
+
+TES.brain.2.Hallmark: Hallmark_KRAS_SIGNALING_DN
+  https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_KRAS_SIGNALING_DN.html
+  Genes down-regulated by KRAS activation
+  K-RAS protein: part of signalling pathway that give instructions for the cell to grow and divide or mature and take on specialized functions
+  KRAS + alcohol linked to pancreatic cancer
+  
+TES.brain.5.Hallmark: HALLMARK_FATTY_ACID_METABOLISM
+  https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_FATTY_ACID_METABOLISM
+  Genes encoding proteins involved in metabolism of fatty acids
+  https://pubmed.ncbi.nlm.nih.gov/87483/#:~:text=Progressive%20alteration%20of%20the%20mitochondria,production%2C%20which%20results%20in%20ketonemia. "Progressive alteration of the mitochondria, which occurs during chronic alcohol consumption, decreases fatty acid oxidation by interfering with citric acid cycle activity. This block is partially compensated for by increased ketone body production, which results in ketonemia."
+
+TES.brain.5.Hallmark: HALLMARK_INTERFERON_GAMMA_RESPONSE
+  https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_INTERFERON_GAMMA_RESPONSE.html
+  Genes up-regulated in response to IFNG
+  INFG protein: secreted as a part of innate and adaptive immune systems
+  Cytokines and lipid peroxidation in alcoholics with chronic hepatitis C virus infection: https://academic.oup.com/alcalc/article/43/2/137/122851
+
+TES.brain.5.C2-KEGG: KEGG_PPAR_SIGNALING_PATHWAY
+  https://www.gsea-msigdb.org/gsea/msigdb/cards/KEGG_PPAR_SIGNALING_PATHWAY
+  Peroxisome proliferator-activated receptors- nuclear hormone receptors activated by fatty acids
+  liver pathway: https://www.genome.jp/kegg/pathway/hsa/hsa03320.html
+  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4308472/ Peroxisome proliferator-activated receptors alpha and gamma are linked with alcohol consumption in mice and withdrawal and dependence in humans
+
+TES.liver.1.Hallmark: HALLMARK_KRAS_SIGNALLING_DN
+  * see TES.brain.2.Hallmark
+  
+TES.liver.1.C2-KEGG: KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION
+  pathway: https://www.genome.jp/kegg/pathway/hsa/hsa04080.html
+  
+  
 
 
 

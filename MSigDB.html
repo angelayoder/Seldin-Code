@@ -385,65 +385,126 @@ our enrichment dataset via the function msigdbr from the msigdbr r
 package. The species was identified as “Rattus norvegicus.” msigdbr has
 access to multiple collections, including hallmark gene sets (H), and
 eight different supplementary gene sets (C1 to C8). In this analysis, we
-did not exclude any of the collections.</p>
-<p>We began by identifying the top five brain and liver
-tissue-exclusive, secreted (TES) protein-coding genes, as identified by
-Ssec score. We then identified the target tissue transcripts that were
-most significantly associated with the top TES protein-coding genes
-(p-value &lt; 0.05). These will be the gene sets for which we will
-identify annotations. This results in 138 liver genes that are
-associated with TES protein-coding genes from the brain, and 935 brain
-genes that are associated with TES protein-coding genes from the
-liver.</p>
+focused on the Hallmark Sets (H), KEGG Pathways (part of C2), and GO:
+Biological Processes (part of C5).</p>
+<p>The top Tissue-Exclusive, Secreted (TES) protein-coding genes were
+determined in SeldinReport_fix.Rmd by determining which TES
+protein-coding genes had Ssec scores higher than the 95th percentile of
+Ssec scores from tissue-exclusive, non-secreted (TENS) protein-coding
+genes. We then identified the target tissue transcripts that were most
+significantly associated with the top TES protein-coding genes (p-value
+&lt; 0.05). These will be the gene sets for which we will identify
+annotations.</p>
 <table>
-<caption>Number of Target Genes in the Liver associated with TES
-Protein-Coding Genes from the Brain</caption>
+<caption>Summary of Top Ssec Scores for Brain</caption>
+<colgroup>
+<col width="3%" />
+<col width="22%" />
+<col width="14%" />
+<col width="12%" />
+<col width="23%" />
+<col width="11%" />
+<col width="11%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th align="left">TES PC from Brain</th>
-<th align="right">Number of Target Genes in Liver</th>
+<th align="right">X</th>
+<th align="left">Gene</th>
+<th align="left">Gene_Symbol</th>
+<th align="right">Ssec_Score</th>
+<th align="right">Number_Target_Genes</th>
+<th align="right">eQTL_FDR</th>
+<th align="right">eQTL_pval</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="right">1</td>
 <td align="left">ENSRNOG00000005652</td>
-<td align="right">49</td>
-</tr>
-<tr class="even">
-<td align="left">ENSRNOG00000002548</td>
-<td align="right">52</td>
-</tr>
-<tr class="odd">
-<td align="left">ENSRNOG00000002381</td>
-<td align="right">62</td>
-</tr>
-<tr class="even">
-<td align="left">ENSRNOG00000003845</td>
-<td align="right">45</td>
-</tr>
-<tr class="odd">
-<td align="left">ENSRNOG00000059507</td>
+<td align="left">Cntn4</td>
+<td align="right">1.709393</td>
 <td align="right">72</td>
+<td align="right">0.3537692</td>
+<td align="right">0.035</td>
 </tr>
 <tr class="even">
-<td align="left">ENSRNOG00000000010</td>
+<td align="right">2</td>
+<td align="left">ENSRNOG00000002548</td>
+<td align="left">Tnn</td>
+<td align="right">1.566616</td>
+<td align="right">62</td>
+<td align="right">0.7175745</td>
+<td align="right">0.152</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="left">ENSRNOG00000002381</td>
+<td align="left">Bmp3</td>
+<td align="right">1.490761</td>
+<td align="right">52</td>
+<td align="right">0.7175745</td>
+<td align="right">0.153</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="left">ENSRNOG00000003845</td>
+<td align="left">Wnt3</td>
+<td align="right">1.454252</td>
+<td align="right">45</td>
+<td align="right">0.7175745</td>
+<td align="right">0.153</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="left">ENSRNOG00000059507</td>
+<td align="left">Lamc3</td>
+<td align="right">1.391114</td>
 <td align="right">56</td>
+<td align="right">0.9518740</td>
+<td align="right">0.537</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="left">ENSRNOG00000000010</td>
+<td align="left">Cbln1</td>
+<td align="right">1.383625</td>
+<td align="right">49</td>
+<td align="right">0.6108947</td>
+<td align="right">0.106</td>
 </tr>
 </tbody>
 </table>
-<table>
-<caption>Number of Target Genes in the Brain associated with TES
-Protein-Coding Genes from the Liver</caption>
+<table style="width:100%;">
+<caption>Summary of Top Ssec Score for Liver</caption>
+<colgroup>
+<col width="3%" />
+<col width="22%" />
+<col width="14%" />
+<col width="13%" />
+<col width="23%" />
+<col width="10%" />
+<col width="11%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th align="left">TES PC from Liver</th>
-<th align="right">Number of Target Genes in Brain</th>
+<th align="right">X</th>
+<th align="left">Gene</th>
+<th align="left">Gene_Symbol</th>
+<th align="right">Ssec_score</th>
+<th align="right">Number_Target_Genes</th>
+<th align="right">eQTL_FDR</th>
+<th align="right">eQTL_pval</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="right">1</td>
 <td align="left">ENSRNOG00000047481</td>
+<td align="left">Kiss1</td>
+<td align="right">1.392373</td>
 <td align="right">329</td>
+<td align="right">0.830778</td>
+<td align="right">0.672</td>
 </tr>
 </tbody>
 </table>
@@ -476,8 +537,8 @@ with examples of pages from defunct ensembl ID webpages.</p>
 </tr>
 <tr class="even">
 <td align="left">Sig Target Genes Brain</td>
-<td align="right">28</td>
-<td align="right">138</td>
+<td align="right">66</td>
+<td align="right">182</td>
 </tr>
 <tr class="odd">
 <td align="left">TES Liver</td>
@@ -486,8 +547,8 @@ with examples of pages from defunct ensembl ID webpages.</p>
 </tr>
 <tr class="even">
 <td align="left">Sig Target Genes Liver</td>
-<td align="right">116</td>
-<td align="right">930</td>
+<td align="right">34</td>
+<td align="right">329</td>
 </tr>
 </tbody>
 </table>
@@ -499,6 +560,719 @@ with examples of pages from defunct ensembl ID webpages.</p>
 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABl0AAADoCAYAAABlwyJGAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAACjjSURBVHhe7d0HmCRlnT9wkCQZXBAR0SMjICAiAipyyKF3nucZkBzEQDhPUTlPOUDUExVRRFT0AFeypCNLRuQEAZcFyVGQKGFZYBeW6Puf38u/xpqed3p7t4uZ7tnP93k+z3RX7Cm26On6dlXNlURERERERERERERERKTrKF1EREREREREREREREQaiNJFRERERERERERERESkgShdREREREREREREREREGojSRUREREREREREREREpIEoXURERERERERERERERBqI0kVERERERERERERERKSBzFLp8vOf/xwAAAAAAGBc6jazXLr81/dOAwAAAAAAGFeULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADeqZ0md2UlgUAAAAAADDalC4AAAAAAAAN6LnSpTSupEppHAAAAAAAwGjrm9Jl4sSJ6fjjjx98XqU+DQAAAAAAwFjpm9IlcvkVlw95HqlPAwAAAAAAMFZ6unSpSpZTTjnl/4/92/gq1XMAAAAAAICx1LOly3nnn5efxyXF6qnmr1JNDwAAAAAAMJZ6snRp96LOPOusYdMDAAAAAACMtZ4sXdpl0jXXDJseAAAAAABgrPVk6dKJKqVxAAAAAAAAo63nSpdZTWlZAAAAAAAAo03pAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA3omdIFAAAAAACgnyldAAAAAAAAGqB0AQAAAAAAaIDSBQAAAAAAoAFKFwAAAAAAgAaMSekCAAAAAAAwHnWbWS5d0kszAAAAAAAAxhWlCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApUuD5pprrsaV1jMe7D7wuzWttJ5+d+HA79W00nrGhWUHfremldbT7z4+8Hs1rbSe8eCkgd+taaX19LvpA79X00rrGQcmTZrUuNJ6AAAAgLGjdGlQqTTpVmk940GpNOlWaT39rlSadKu0nnGhVJp0q7SeflcqTbpVWs94UCpNulVaT78rlSbdKq1nHCiVJt0qrWd2vXqBBdL0aVOK4wAAAIDO9FTpsuyyrxtWOkyYMKE4bS9qfe1NKK0n/OmuW9Kqq6ycrrv26uL4cOst16eNN9owLbLwwvlnPO9k3GgolSbdKq2nCZ1uq1+fc3paa8018nSbvmeTIdO1G9dOqTTpVmk9Teh2O914w+TiPnD2WacNW0ZRqTTpVmk9Deh2W4VOlzFMqTTpVmk9Dejkd5zZv5utt9py2LiOt1WpNOlWaT0N6PTfQ7vt0ekyhimVJt0qrWcmZuX1j7QdZnsbdKhUmnSrdR1RmsTv8+ILTw8ZHoXKXx7685BhrZQuAAAA0L2eKV1+/OMf5oMEiyyySJo8+aq0//77pXnnnTfNPffcxel7Uf3gTVNK69n/a/sMjm9Xuqy+2qrpB98/MD0x9eF00Pe+k9Z48+odjRsNpdKkW6X1TL7myvw7lsZ1qpNtdc/dt6WlJkxIl/32ovTM01PTgd89IK27ztozHTczpdKkW6X19MJ2avXsjCdz4fDIw/cVxw9TKk26VVhPr2yr2d6HS6VJtwrrGa3t1Kr1300cXD/i8MOGTdeRUmnSrcJ6RnNbtdses/1vqlSadKu0noJ4rbH94vGsvP6RtsNsb4MOlUqTbrWuQ+kCAAAAY6tnSpcN3r5+Pkhw0onHFMcvs8xrB4uGsNqqq6bFFlt0yLDttt16cPp4HoVNNa51/jXWePOQ5TehvvymlNZTiYNDI5Uud95xU1ps0UUHD7rEz/jmbpwh025cfRmvpFJp0q3Sev731BPzQbM9dt813XzTdcVp2ul0W/3qhGPymQj1YW9Ybrn8Lfx24+rDSkqlSbdK6+mF7VQfFuKA595f/fKw4SMqlSbdKqynF7ZVV/twqTTpVmE9o7WdWrX+u+mH0mU0t9VI26Orf1Ol0qRbpfXUxHaK7RXbLbbfrL7+0nboaht0qFSadKt1HTMrXWLcN76+X/7/yWuXXjr/v6Y+TVW67PNfX0n//IF/TM8/N63tPGeecWr+eyS21fvft0UujH922KFpxx22y+OjwJp/vvnSvX++Iz+P/24//ckh+XG75QIAAEC/6pnSJcSH70oUJhtt9I48fM89/z0PW2LxxdNlv70wzT///IPTxQf1c84+fWD6oSVFPH7Vq16VfnHk/wzOH8uLgydLL73UkGmbEstsWmk9lXalS3w7Pi4/Vh+28kor5eHtxtWHvZJKpUm3SusJceApDspt/t7N0hb/sPmQy1X964c+WNzuMTzGd7qt4pvWr1lyyXT1Vb/LB6jigOAbl18+T9duXH0ZJaXSpFul9YSx3k716R6f8lBacYUV8s/68LZKpUm3SusZMNbbqtNlFJVKk26V1jNgNLZTXenfTRxcn3eeefJB3zgDpv4aZqpUmnSrtJ4Bo7WtRtoes7O9B5VKk26V1jMgXm9sn9hOsb1iu8XwWX39pe3Q1TboUKk06VbrOjopXaL0iP0kCpPXLbPMkGli/ihCqsIlho80TxQp1Rl5MV+cibvJu9+VC6y/e9Ob8jTHHjMxP44ziOJ5nLFXXbat3WsBAACAftVTpUtY+y1r5bIkPoiHKF+qkqU+3fzzzzdkWJQp8TxKmXheH7fAAgvk562q8U0praNbpfVU2pUul/7mghEPHrUbVx/2SiqVJt0qrafV6aednL+N+8UvfK44vtWsbKsfH3pwev2yy6aFFlwwn6FQ/4Z0u3HtlEqTbpXW02qstlNlry/tmQ/61YfNVKk06VZpPS3GYlt1tQ+XSpNuldbT4pXcTpV2/27igHAc/J2lyyeVSpNuldbTYjS2Vev26OrfVKk06VZhPXt+/rN5u8T2aR03u6+/vh3OO/es2d8GHSqVJt1qXUf8TvH3Q2vpEgVTXHav/rdFTFOfNrZDnOES/7+pCpcw0jxHH3Vk+siHPzQ4LuaJ9cQlEaNouf++u3I5eNGFv873yInXFuVxNX271wIAAAD9qudKl7rq8mHdli6l+V8JsY6mldZT6eTyYtXzOIgRB6tieLtx1bBXWqk06VZpPSF+vzhIF9+ODvFt2mrczL5BPrvbKsbHN3ZLB4/ajWtVKk26VVpP6JXtFJemiTPYnnry0SHTzlSpNOlWaT0Dxnpbze4yslJp0q3SegaM5nbq9N9NnD0UZw2Vxg1TKk26VVrPgNHcVnXV9uhmGcXSpFul9QyI7VJto9he8TpjeFevf0Bsh/PPO7urZXSiVJp0q7SeKD4efODuwedxJkkMi8fxb6caXj2vtmOULnEWUJS99b8vRpqnVLrEGURRuuzyiZ3yJdyibIlxG75jg/TLiYcPXnasWk71uHpevRYAAADoVz1TulSX/Ip7rcTlwqpLgoVP7LxT/jkhX8LiwrTQQgsNjqsuL1Y9r5ZXf1zN/+pXL5Dnf88m7xoyvinVa2hSaT2V1tJl++22yarn8Y3dHx58UD4IGZf1qH+Dt9240VAqTbpVWk9cfqabeyWEdtuqdZvHwaK4LNT6b1sv/eiQ7w8On9m4kZRKk26V1tNL22nbbbbKN42vD+tIqTTpVmE9vbKt2i2jrVJp0q3CekZ7O4307yYukRSXMoqDwHEZo3jPqH+Dv61SadKtwnpGc1u12x7tltFWqTTpVmk9NbGdYnvFdovtF8M63QZhpO0w29ugQ6XSpFul9Xx8y4/m3zcuJxZnt3zqk59I//SP78vjWv+2iOdV0VGd+fTrc07P26QqnEaaJy4vFoVVnA0U88VZMnF5sZjm+OOOyme1HPCtb+Tncb+leB7FS3051ePqefVaAAAAoF/1TOmy++6fzh+2W1U31l9sscWGDI8b6S+yyCJDhn3sYx8ZXF48rx6HqtSpq49vQuvym1BaT1wzvT5NXI8+hrceVIobbsc3S+ObuvGzfrPyduNGQ6k06VZpPXGwOm7iWxrXqXbbqr7NP/tvu+dv+MZButYiod24dkqlSbdK6+mV7TTpD1fkb1jHgdD68I6USpNuFdbTK9uq3TLaKpUm3SqsZzS3U7t/N/Ft+zh4HJdoe9c7N86vq3WaEZVKk24V1jOa26rd9mi3jLZKpUm3SuspiO1W/Q6dboMw0naY7W3QoVJp0q3SeqJoieIlCpHwsY9+OF/qK8a1/m0Rz1tLl3gcl12LeyTFGTPt5okzjqob6ccZSNXlIqPwedXcc6fbb7shP4+z0WK+6ob61XKqx9VzpQsAAAD9rmdKl/EgDhY0rbSe8aBUmnSrtJ5+VypNulVaz7hQKk26VVpPvyuVJt0qrWc8KJUm3Sqtp9+VSpNuldYzDpRKk26V1gMAAACMHaULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQgLEpXZ5/FAAAAAAAYFxRugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAN6qnRZasJLaa6BpdX96rgn8/DXLv1Seurxv0277jovpBuvezw/vvSiqWnjjZ5PCy341/S6ZV5Km2/2XLrg3CeGLXfeef6aVlzhxfSLw58aMq7dsp+d/mja+ytP5+XOP99f09pveSGdedrflh1+8L1paY03v5BevcBf87Lev8VzQ6a59cYp+fUtsvBf88943m747I6bnXkqf7p9Slp1lRfTdZNe/r0r++3zdB4ev9vqq72QTj/1ySHjr5/8eF7meecM3SZHT3wqTx/bbI/dnhkyLow0HwAAAAAA9KueK13uvHVoGVAN3/rjz6Z99n56cFhVjDz+yGNpsUVfymVAFCSPPPhYOuLnT6UDvjl9yPyx3BeffbmgiXImSoaZLTse77j9jFzi3Hz947mYiTIlipWzz3i5LPjMp55J6731hfS7S6emZ556ND1472Ppl0c+lYdXy4vyIYqZJx57LB303ZcLmnbDZ3fc7C5v/32nD5ZcraXLtlvPSJOvfjw9/8zLRUpsr2rcY395LG+rKLLq5cmB356eh199xdQ8XzW8MtJ8nZpr4IXWlaYBeov9FvqTfRf6j/0W+pN9F/qP/Rb602jsu31TukTpEWXHX+5/LA+ripE4YyJKlPqZKq1alxsFxEXnv3ywv92yo5iJszGiJKjmDXGmTEwT42Pd998z/DVXYr1RCkXhE8/jZywzyp/S8FjmSPO0Gze7y4vnldguraVLJQqlKG3iLJ54HmXKZpu+fEbRpps8N1iexPAlFn8p3X5zeZuMNN+sGI0dA2iW/Rb6k30X+o/9FvqTfRf6j/0W+tNo7Ls9V7rE71lXXV4sztD4ypefTp/d4+UzSKpiJB7/6788m96w3Itp5x1npB9+f9rg8Ppyo3iIA/6nnPhkLlhiedW4kZYdZ7Vs8PbnhywrRFnxqrn/ml9baXzdZZdMzZfnqg9beaUX048Peao4PKYfaZ5242Z3efVhI5UuUejEf4s4O6YqauJMnp8eOi0/rpcnUbZEoRPFShRSr1/2xcHp2s03K1p3jEmTJgE9zH4L/am076aTgJ5W2m8/DvQ8+y70H59zoS8V33MHhjWtb850iWIkxL1V4sB/vXQJcQmsHx08LRcvcaZFXOKqPn9svxCP68VCu2V3UrrEpcWq4XHZrmo9USjEsCgsSoXHjw4euSQZaZ5242Z3efVh7c50icLqpBOeTG9c/sX0Pz97Ku35ub9dPq1ensQyowCLs4dinrjE2GuWfCmfkRSXfRtpvlkxGjsG0Cz7LfQn+y70H/st9Cf7LvQf+y30p9HYd/uqdInH3/nW9LT9tjOGlS51UZZEgVA9r5Yb93+J4VHO1MeNtOyYJ87aaL28WNyzJaaJ8XGD+XvuHPqa4/4yVekS08Slvapx1aW9Lrnw5cuBtQ6P6Ueap9242V1eNSy0K10q8fvGNop/j61i+0XZEme31OeJe+JEYbPbZ54Zcb769AAAAAAA0I/6rnSJe4vEmRRx9kQUI3Fvll12npEmXfl4mv7Eyzeyj5vfxxkv9fmr5UZBEvPHWSozW3YMixvJVzfSj+XHDfTj8mRR7MT4WM/ab3khXXLhE3l8LCtKhKp0CXGWSVz2LO47E/dFqc46GWn47I6bnXnqWkuXuFdNFCyx7eJ3izN54kyX+jyh9YyVWM4B35yet+cVl03N26u1mAqze6YLAAAAAAD0op4rXVrPgqjf06Wa7mc/efkyXlGMRDEQxUeUAXEWRpQme+z2TC4X6sutlzlRLMSwKGzaLTuePzv90Xy/l7j02Pzz/TXf1yTOZKmmj7NGYp64zFicPRLTxc3m69PEsjZ8x/N5fPyslj3S8NkdNzvzhP33nT5km6+15stnCUXREts2tmncn2WTdz+fLxNWzVdpLU9uvXFKHhbzxLJGKla6LV3+dPs1adVVVhr473lpcTzQW/b83K5pxRXeNPD/hgXTxhu9feD/J5cVpwN6y3777JXfb1+9wAJp9dVWGfgb5+jidEDviffaRRZeeOBv7pOK44HesvXHPzzwmXzoJU9uvfH3xWmB3nH0xJ/kv5Pnn2++tMduuxSnAXrPK7nv9lTpAp3af98vD/4RqnSB/vCxj3wwTb76kjT9iT+nvb+yZ1r/besWpwN6y7ZbfzTvu88/81D+o3SpCa8pTgf0lsf+cntad5218hcelC7QH6J0OeLnPyyOA3rTgd/+Wn6/vfqKC/Lfy6VpgN7zSu+7Shf6WrSRShfoP/Gm9ndvWr44DuhNzzx1X/rB976Z3r/FZsXxQO+ID46bbfrudMG5p6RNN3mn0gX6hNIF+ku83y6x+GLp9puvKo4HetNo7LtKF/qa0gX606d22T7t9cV/K44Des+lF52Rzy5d482r5st7lqYBesdnPrVj+umhB+bHShfoH1G6zDvPPPkyJ2utuXo6+4zji9MBvSEO2MZlPOOLDnEZ7dcv+7rB91+gd43Gvqt0oa8pXaD/HPDN/0qbvHuj9Oz0B4rjgd4U3wY66YQj0xuXXy69+OzDxWmAsRffko/7qFXPlS7Qf+JyvMcedVi+n1o8Lk0DjL3LLjkrvWG5ZdPN11+e/1aOKzq8Zskl3L8Uetxo7LtKF/qa0gX6yxf33D390/s39+ER+lgcALr3T38sjgPG3m6f2Xnw3od13/nWvsXpgd4VB4DigFBpHDD2Yv+Mb8jXh22+2Sb5i0r1YUBvGY19V+lCX1O6QH+Ie0FE2fLZPT7pG/LQR+6/5/q0/bZbpjtv/UMuSw/67tfzmS6laYHe5EwX6B///E9bpFtv/H3+2zkucxLfwo1v4JamBXpDHJeKqznEfnvFZeem1y69VLrnzmuL0wK945Xed5Uu9KX99/3ykG/uxfVuS9MBvSEO2Nb32YqDQNDbomjZecet80GfuNZtXBrQ5RKgvyhdoH/ssvO2g++573rnO9Lkqy8pTgf0jihK47029ts4NuU9F/rDK73vKl0AAAAAAAAaoHQBAAAAAABogNIFAAAAAACgAUoXAAAAAACABoxN6fLSDAAAAAAAgHFF6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKVLB+aaa+BXLAwPMe7FF54ujgMAAAAAAOYcPV+63HnHTelVc8+dtt1mq+L40aB0AQAAAACYc7xqmyOYw23wg6tmS8+XLvt/bZ+0yyd2Sostumh66slHi9O80pQuAAAAAABzjtJBeOYspUKlEz1fuqy80krpumuvTlv8w+bplxMPz8Oi5Nhj913Ta5ZcMtt6qy3T889NGzasKkMuufi8tN5b100LLbhgWv9t66VJf7giD4/CJOZ57dJLpzcuv3z62WGHpo9v+dG0xOKLp1VXWTmvt5ruy//xxfT6ZZdNb1huuXTKySfk4dW4WM+B3z0g7bzTDoPDH3zg7vS6ZZZJzzw9dXAYAAAAAAC9r3QQnjlLqVDpRE+XLldcfmlafbVV8+NfHPnztPl7N8uPzzzj1FyePPboA+n+++5KO+6wXTrppOOHDZs+bUouP6JwufGGybmYuejCX6d111k7LycKkyhanpj6cP65yMILp5NOPC6fUfOV/9wrbb/dNoPTHX/cUXm6KHCilKnOuqlKl8enPJTLnvgZw+MMnVhGPAYAAAAAoH+UDsIzZykVKp3o6dJlt10/ncuLeByFR5ypEoXKrbdcnwuOGH/0UUemRx6+rzgs5ouyJIqRunnnmSePi8fVumL+v3vTmwafn3fumWnT92wybLqw9lvWyoVQNa46o+Yzn/5kOuh738nlTpw5E6+1Ph8AAAAAAL2vdBCeOUupUOlEz5YuUVxEiVIVJZW4jFeMj1IlLjcWJctSEybkM1pKw449ZmL6yIc/NGz5IZZXPY4b9tdLlzgjZqTSJc6+qV96rCpd4myauBzar044Jl/erD4PAAAAAAD9oXQQflY8+uTAcgbywosvpbv+8mT6xGG/LU5XF9MusP0vBp9Xy4hMm/F8OvWqu9OiO/9yyPiHn3hmyLBr734srbnXKVkpH/jueYPTVg4+54b8Gp9+9oV0+W1/SW/5j1OHTTMnKhUqnejZ0uV/Tz0xXxasPizOWllrzTVykfLjQw/Olw+Ly4mtuMIK6Zvf/NqwYXHvlnv/fEe+HFgUIXF/lZtvui6XMrG8WSldbr/thvTsjCfzWTQxXZRC1biqdAmb/f2m+R4xV/7+ssFhAAAAAAD0j9JB+FkRhchKnz8xzbPtEek9Xz87Fxor/PuvitNWSqVLLCMeL7Prsemm+x5P2x36myHjT7j8zvTNUycPDqtKl+p5JZZ7w71T0tKfOWbYuJOv/FN661f+Ny2808T0rdOuTX+465Fh08yJSoVKJ3q2dImzU376k0OGDIvSI85gOeH4o9PGG22Y78ESN6v/xtf3S5OvuXLYsGq+KFA2ePv6+fJkcdmv/fbdOw/vtHSJy5Ft+I4Nht2IP7SWLkccflietnoOAAAAAEB/KR2ED5GfnH9TPsPkz49OS7se/n/pxCvuSlOnP5tue/CJtM5/vnyWSL0wCbfcPzW997/PyY9/f/vDuYSJs1cuvuGBtOxux+Xio57ldj9+yDKisIlCZbUvnDS4zBj/5i+dnF9LlDIxbKTS5UvHXJkLldbhrd6+9+np7keeKo6b05QKlU70bOnSr97/vi3yWTWlcQAAAAAA9L7SQfgQiaJl8V2Oyj+jONny4IvyJb6+ffp16ZjL7sjTVYXJfNsdmT76gwtzMRLz1JcVZ598/+zr0/fO+mN+3u7yYpGr7nh4SKES42OZsd5Dz7sxDyuVLkt+8uh8+bD4WR9ecvjFtw6+njldqVDphNKlQdf/cVI+k6Z+5gsAAAAAAP2ldBA+RKrHcdZJ/ayQ9x1wbvrNTQ/mx/XCJB5XZ8CET/78svTbmx/MRUwULXGJsBje7vJicemvLxz9+3x2TX18lC7hoalPD54N01q6RImy70mThgwr+eoJV+fXVX8Nc7JSodIJpQsAAAAAANSUDsKHSPU4CpF66RKXD6uXLjE+zi6JS4v9+8Qr8vAPHnh+vgxZTDvhU8fke7R0UrqEOJsmUp0xU5Uu8fg/j78qn2XTWrq86bMnpPsemz7kZvslccbNOZPvzeVOafycqFSodELpAgAAAAAANaWD8CFSPe6kdInHVfGx1SEXpx1+8ps8TZQgy//b8WnipbcNli4xz7v3P2twefVlRLnytZOvSX+8Z8qQ8VXpsuCOE/M6pkybMaR0Oe53d6T/OPaqwechypnqMmgxX5QtcXmyuOl/fbo5XalQ6YTSBQAAAAAAakoH4UOketxp6RLi8mIx7H0H/DqdMemeNOO5F9IN904ZUrp8/pdX5Bvyh7gxfkxfJW68f+6196ZV9hx6I/2qdAlxj5lIVbq87aunpQcen56LlWqaUC9d4jWWEpdKq88zJyoVKp1QugAAAAAAQE3pIDxzllKh0gmlCwAAAAAA1JQOwjNnKRUqnVC6AAAAAABATekgPHOWUqHSCaULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5Qu9J255hr4J1cYDvQu+y30J/su9B/7LfQn+y70H/st9KfR2HeVLvQdb2rQf+y30J/su9B/7LfQn+y70H/st9CfRmPfVbrQd7ypQf+x30J/su9C/7HfQn+y70L/sd9CfxqNfVfpQt/xpgb9x34L/cm+C/3Hfgv9yb4L/cd+C/1pNPZdpQt9J3YMAAAAAACYVaVjzk1SugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULrQV/501y1p1VVWTtdde3V+fuMNk4s3Qzr7rNOGzQuMjdb9Npx37plp7beslV69wAJpjTevnk4/7eQh8wBja7999877beyjq6+26uA+eust16eNN9owLbLwwvlnPG+dFxgbW2+15bC/iat99Oijjsz78vzzzZf22H3XYfMCY6Pd51nvudC7Rvo8a7+F3lc6RtXJvnv9Hyfl8bH/t44rUbrQN/b/2j6Df4TWd4y6Z2c8mdZac430yMP3FccDo6u038Z+Wr1RxeP4UBl/rD7z9NRh8wNjY9tttkqTr7kyPf/ctHywdqkJE/LwOGj7g+8fmJ6Y+nA66HvfyR8yW+cFxkaULkccftiw4Qd+94C07jprp6uv+l3ep1vHA72j/nnWey70pnafZ+230NtGOrY8s333sUcfyH9Pr7jCCkoXxq/YEUYqXWLH2PurXy6OA8ZOfb996slH00ILLpgP/sTzeFNbYvHFlS7Qg2K/jD8+3/++LdKdd9yUFlt00fTiC0/ncfEzPnDGN4Va5wNGX6l0iZIl3mNvv+2GIcOB3lR9nvWeC71rpM+zN914rf0W+kT9GNXM3nPj7+nN/n7TdMH5Z6dN37OJ0oXxa6TS5fEpD+XGMX62jgPGVut+G6dfx7eB/uWDH8hvXp2+aQGj59LfXJC/ARTf8ok/OC/77UX5NOz6NCuvtFIeXh8GjI0oXeadZ558CbH4pnx88zbKlvjQGO+1cYDo9csum376k0OK8wNjq/551nsu9LbS51n7LfSP+jGqme27n/n0Jwf/fla6MK6NVLrs9aU90ze+vt+w4cDYq++38c359d+2Xrrowl+nSX+4Iu280w5pw3ds4EwX6EHxrZ6TTjwuvXH55dMlF5/vgyT0genTpqRjj5mYDwZdcP456Q3LLZduvum6vD/Ht3Jfs+SS+ZrUpXmBsVP/PBtffPCeC71ppM+z559/tv0W+kT9GFW799w4i3zPz392cLjShXGtVLrcc/dt+QNlnOZZHw70hvp+G9+8jT9KW8fH8PowoHfEwdv/u+zifNp1Naw67TpOx65PC/SGKFfivTXObqkP3/y9m+UytT4MGFutn2erS51U473nQu8Y6fPs4YcfZr+FPlE/RtXuPXe3XT89eA+Yuu98+78Hpx+J0oW+Uypd4oa/cZPQ+jCgd9T327jUSVzi5MwzTs03Hrzk4vPyNXBd6xZ6w/333ZW2326b/EdmfGM+ri8fZ7rEuPgG0A8PPigfFIp7vbR+IwgYO//8gX9Mt95yff4GblwCIQ7gxtkt8R58wLe+kYdfcfml6bVLL50P8JaWAYyN0udZ77nQm9p9nrXfQn9oPbbc6b7rTBfGpf2/ts+QVjGuVR3D43TO+AafSxNB7xlpv/3VCcfkN7n49nwMiz9YW+cFxkYULXGZhDhgGx8oN3n3uwYvRXTjDZPzN/vimz/xM563zg+MjV0+sdPgfvuud26cJl9zZR4eRUx8QIzh8Z7b6QdFYHSM9HnWey70rpE+z9pvobeNdIyq031X6QIAAAAAADDKlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAAAAAANAApQsAAAAAAEADlC4AAAAAAAANULoAAAAAAAA0QOkCAAAAAADQAKULAAAAAABAA5QuAAAAAAAADVC6AAAAAAAANEDpAgAAAAAA0AClCwAAAAAAQAOULgAAAAAAAA1QugAAAAAAADRA6QIAADCHm2uuudKLLzxdHAcAAHRO6QIAADCOLDVhQi5R5p1nnrTiCiukXxw5889gShcAAGiG0gUAAGAcidLlzjtuyiXKpb+5IC204ILpT3fdUpy2onQBAIBmKF0AAADGkap0qZ6vvtqq6aILf50fX3LxeWm9t66bi5j137ZemvSHK/Lweuky0jQbvmODPGyRhRdOm/39punBB+7Ow2O+PXbfNb1mySWzrbfaMg8baTkAADCeKV0AAADGkap0ef65aemUk09Ir1166fTE1IdzSRIlyI03TM7joohZd5218zxV6dJumsqzM55MX/zC59JeX9ozPz/zjFNzqfLYow+k+++7K+24w3bpzjtvnulyAABgPFK6AAAAjCPVPV1CPL7u2qvz8OOPO2pweCXu+xLj4nGULu2mOeLww9Im735XLnFiWJzREsNvveX6fIbLbrt+Oh191JHpkYfva7scAAAYz5QuAAAA40h1psvjUx7Klxb70SHfz8OPPWZi+siHPzRs+hClSJQuI00TZ7OsusrK+YyVOKMlpqtKlxBFyy8nHp6Ll1j/jw89eMR1AQDAeKZ0AQAAGEeq0iUe33P3bekNyy2XfnXCMeneP9+Rllh88fz4maenpptvui6XJDFdVbqMNE2cwbLpezZJTz35aJ5m5512GCxdooCJkmX6tCm5kFlxhRXSOWefPuK6AABgPFO6AAAAjCP10iXE5cViWJylEjZ4+/r55vZvXH75tN++e+dpqtIlHpemifu4/MsHP5BevcACaa011xhSuky+5sq08UYb5hvsv26ZZdI3vr7fiMuJ4QAAMJ4pXQAAAAAAABqgdAEAAAAAAGiA0gUAAAAAAKABShcAAAAAAIAGKF0AAAAAAAAaMCalCwAAAAAAwHjUbWapdBEREREREREREREREZFylC4iIiIiIiIiIiIiIiINROkiIiIiIiIiIiIiIiLSQJQuIiIiIiIiIiIiIiIiDUTpIiIiIiIiIiIiIiIi0kCULiIiIiIiIiIiIiIiIg1E6SIiIiIiIiIiIiIiItJAlC4iIiIiIiIiIiIiIiINROkiIiIiIiIiIiIiIiLSQJQuIiIiIiIiIiIiIiIiDUTpIiIiIiIiIiIiIiIi0kCULiIiIiIiIiIiIiIiIg1E6SIiIiIiIiIiIiIiItJ1Uvp/3+QZ3OIMAiYAAAAASUVORK5CYII=" alt />
 <p class="caption">Missing Gene: ENSRNOG00000013464</p>
 </div>
+<p>Of most concern were the 12 missing Ensembl IDs from the TES
+protein-coding genes in the liver (34% of total missing). We
+investigated further and found that these genes are still available in
+Ensembl databases, under different names.</p>
+<table>
+<caption>Missing TES Liver Ensembl IDs</caption>
+<thead>
+<tr class="header">
+<th align="left">x</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ENSRNOG00000020805</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000050499</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049727</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000046529</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013464</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049515</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013410</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000016535</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033619</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245</td>
+</tr>
+</tbody>
+</table>
+<table>
+<caption>Ensembl ID History Converter</caption>
+<thead>
+<tr class="header">
+<th align="left">Old.stable.ID</th>
+<th align="left">New.stable.ID</th>
+<th align="right">Release</th>
+<th align="right">Mapping.score</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ENSRNOG00000020805.1</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">18</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">30</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">40</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">56</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000020805.2</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000050499.1</td>
+<td align="left">ENSRNOG00000050499.2</td>
+<td align="right">77</td>
+<td align="right">0.901265</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000050499.2</td>
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="right">80</td>
+<td align="right">0.854424</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left">ENSRNOG00000062459.1</td>
+<td align="right">105</td>
+<td align="right">0.949579</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left">ENSRNOG00000070480.1</td>
+<td align="right">105</td>
+<td align="right">0.894160</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left">ENSRNOG00000067602.1</td>
+<td align="right">105</td>
+<td align="right">0.884296</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left">ENSRNOG00000063113.1</td>
+<td align="right">105</td>
+<td align="right">0.946990</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left">ENSRNOG00000065108.1</td>
+<td align="right">105</td>
+<td align="right">0.927494</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left">ENSRNOG00000069151.1</td>
+<td align="right">105</td>
+<td align="right">0.920880</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000050499.3</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049727.1</td>
+<td align="left">ENSRNOG00000049727.2</td>
+<td align="right">77</td>
+<td align="right">0.849358</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049727.2</td>
+<td align="left">ENSRNOG00000049727.3</td>
+<td align="right">80</td>
+<td align="right">0.850406</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049727.3</td>
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="right">88</td>
+<td align="right">0.674613</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left">ENSRNOG00000069151.1</td>
+<td align="right">105</td>
+<td align="right">0.814776</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left">ENSRNOG00000066917.1</td>
+<td align="right">105</td>
+<td align="right">0.791466</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left">ENSRNOG00000063113.1</td>
+<td align="right">105</td>
+<td align="right">0.795088</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left">ENSRNOG00000062459.1</td>
+<td align="right">105</td>
+<td align="right">0.783334</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left">ENSRNOG00000070480.1</td>
+<td align="right">105</td>
+<td align="right">0.784426</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049727.4</td>
+<td align="left">ENSRNOG00000063042.1</td>
+<td align="right">105</td>
+<td align="right">0.776110</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="right">40</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="right">56</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033130.1</td>
+<td align="left">ENSRNOG00000033130.2</td>
+<td align="right">70</td>
+<td align="right">0.980166</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130.2</td>
+<td align="left">ENSRNOG00000033130.3</td>
+<td align="right">77</td>
+<td align="right">0.949564</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033130.3</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130.3</td>
+<td align="left">ENSRNOG00000062459.1</td>
+<td align="right">105</td>
+<td align="right">0.979629</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033130.3</td>
+<td align="left">ENSRNOG00000065108.1</td>
+<td align="right">105</td>
+<td align="right">0.927583</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033130.3</td>
+<td align="left">ENSRNOG00000063113.1</td>
+<td align="right">105</td>
+<td align="right">0.937274</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033130.3</td>
+<td align="left">ENSRNOG00000069151.1</td>
+<td align="right">105</td>
+<td align="right">0.910535</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="left">ENSRNOG00000049727.1</td>
+<td align="right">70</td>
+<td align="right">0.950549</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="left">ENSRNOG00000050499.1</td>
+<td align="right">70</td>
+<td align="right">0.996337</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="left">ENSRNOG00000050595.1</td>
+<td align="right">70</td>
+<td align="right">0.931159</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="left">ENSRNOG00000046529.1</td>
+<td align="right">70</td>
+<td align="right">0.975000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543.1</td>
+<td align="left">ENSRNOG00000042543.2</td>
+<td align="right">77</td>
+<td align="right">0.902002</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000042543.2</td>
+<td align="left">ENSRNOG00000042543.3</td>
+<td align="right">80</td>
+<td align="right">0.943899</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543.3</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000042543.3</td>
+<td align="left">ENSRNOG00000062459.1</td>
+<td align="right">105</td>
+<td align="right">0.979021</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543.3</td>
+<td align="left">ENSRNOG00000065108.1</td>
+<td align="right">105</td>
+<td align="right">0.927583</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000042543.3</td>
+<td align="left">ENSRNOG00000069151.1</td>
+<td align="right">105</td>
+<td align="right">0.910182</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000042543.3</td>
+<td align="left">ENSRNOG00000063113.1</td>
+<td align="right">105</td>
+<td align="right">0.937283</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000046529.1</td>
+<td align="left">ENSRNOG00000046529.2</td>
+<td align="right">77</td>
+<td align="right">0.912861</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000046529.2</td>
+<td align="left">ENSRNOG00000046529.3</td>
+<td align="right">80</td>
+<td align="right">0.950014</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000046529.3</td>
+<td align="left">ENSRNOG00000069151.1</td>
+<td align="right">105</td>
+<td align="right">0.910182</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000046529.3</td>
+<td align="left">ENSRNOG00000062459.1</td>
+<td align="right">105</td>
+<td align="right">0.979021</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000046529.3</td>
+<td align="left">ENSRNOG00000065108.1</td>
+<td align="right">105</td>
+<td align="right">0.927583</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000046529.3</td>
+<td align="left">ENSRNOG00000063113.1</td>
+<td align="right">105</td>
+<td align="right">0.937283</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000046529.3</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013464.1</td>
+<td align="left">ENSRNOG00000013464.2</td>
+<td align="right">18</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013464.2</td>
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="right">30</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="right">40</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013464.3</td>
+<td align="left">ENSRNOG00000013464.4</td>
+<td align="right">56</td>
+<td align="right">0.506526</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013464.4</td>
+<td align="left">ENSRNOG00000013464.4</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013464.4</td>
+<td align="left">ENSRNOG00000013464.5</td>
+<td align="right">70</td>
+<td align="right">0.886263</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013464.5</td>
+<td align="left">ENSRNOG00000013464.6</td>
+<td align="right">80</td>
+<td align="right">0.819452</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013464.6</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049515.1</td>
+<td align="left">ENSRNOG00000063224.1</td>
+<td align="right">105</td>
+<td align="right">0.965109</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000049515.1</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000049515.1</td>
+<td align="left">ENSRNOG00000062551.1</td>
+<td align="right">105</td>
+<td align="right">0.965109</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013410.1</td>
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="right">18</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="right">30</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="right">40</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013410.2</td>
+<td align="left">ENSRNOG00000013410.3</td>
+<td align="right">56</td>
+<td align="right">0.916357</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013410.3</td>
+<td align="left">ENSRNOG00000013410.3</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013410.3</td>
+<td align="left">ENSRNOG00000013410.4</td>
+<td align="right">70</td>
+<td align="right">0.891702</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000013410.4</td>
+<td align="left">ENSRNOG00000013410.5</td>
+<td align="right">80</td>
+<td align="right">0.981698</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000013410.5</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000016535.1</td>
+<td align="left">ENSRNOG00000016535.2</td>
+<td align="right">18</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000016535.2</td>
+<td align="left">ENSRNOG00000016535.2</td>
+<td align="right">30</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000016535.2</td>
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="right">40</td>
+<td align="right">0.618941</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="right">56</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000016535.3</td>
+<td align="left">ENSRNOG00000016535.4</td>
+<td align="right">105</td>
+<td align="right">0.714269</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033619.1</td>
+<td align="left">ENSRNOG00000033619.2</td>
+<td align="right">40</td>
+<td align="right">0.742359</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033619.2</td>
+<td align="left">ENSRNOG00000033619.2</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033619.2</td>
+<td align="left">ENSRNOG00000033619.2</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033619.2</td>
+<td align="left">ENSRNOG00000033619.3</td>
+<td align="right">56</td>
+<td align="right">0.943470</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033619.3</td>
+<td align="left">ENSRNOG00000033619.3</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033619.3</td>
+<td align="left">ENSRNOG00000033619.3</td>
+<td align="right">70</td>
+<td align="right">0.739389</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033619.3</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033245.1</td>
+<td align="left">ENSRNOG00000033245.2</td>
+<td align="right">40</td>
+<td align="right">0.522381</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245.2</td>
+<td align="left">ENSRNOG00000033245.2</td>
+<td align="right">45</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033245.2</td>
+<td align="left">ENSRNOG00000033245.2</td>
+<td align="right">49</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245.2</td>
+<td align="left">ENSRNOG00000033245.3</td>
+<td align="right">56</td>
+<td align="right">0.853775</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033245.3</td>
+<td align="left">ENSRNOG00000033245.3</td>
+<td align="right">57</td>
+<td align="right">1.000000</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245.3</td>
+<td align="left">ENSRNOG00000033245.4</td>
+<td align="right">70</td>
+<td align="right">0.824074</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033245.4</td>
+<td align="left">ENSRNOG00000033245.5</td>
+<td align="right">80</td>
+<td align="right">0.973026</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245.5</td>
+<td align="left"><retired></td>
+<td align="right">105</td>
+<td align="right">0.000000</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033245.5</td>
+<td align="left">ENSRNOG00000065574.1</td>
+<td align="right">105</td>
+<td align="right">0.871099</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245.5</td>
+<td align="left">ENSRNOG00000065350.1</td>
+<td align="right">105</td>
+<td align="right">0.854612</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSRNOG00000033245.5</td>
+<td align="left">ENSRNOG00000070375.1</td>
+<td align="right">105</td>
+<td align="right">0.863639</td>
+</tr>
+<tr class="even">
+<td align="left">ENSRNOG00000033245.5</td>
+<td align="left">ENSRNOG00000067685.1</td>
+<td align="right">105</td>
+<td align="right">0.872888</td>
+</tr>
+</tbody>
+</table>
+<p>Additionally, significant target genes brain were found to have a
+high degree of missingness, with 36% missing.</p>
 </div>
 <div id="enrichment-analysis" class="section level2">
 <h2>Enrichment Analysis</h2>
@@ -1738,6 +2512,34 @@ ENSRNOG00000047481</caption>
 </tbody>
 </table>
 </div>
+</div>
+<div id="cursory-googling" class="section level3">
+<h3>Cursory Googling</h3>
+<p>TES.brain.2.Hallmark: Hallmark_KRAS_SIGNALING_DN <a href="https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_KRAS_SIGNALING_DN.html" class="uri">https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_KRAS_SIGNALING_DN.html</a>
+Genes down-regulated by KRAS activation K-RAS protein: part of
+signalling pathway that give instructions for the cell to grow and
+divide or mature and take on specialized functions KRAS + alcohol linked
+to pancreatic cancer</p>
+<p>TES.brain.5.Hallmark: HALLMARK_FATTY_ACID_METABOLISM <a href="https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_FATTY_ACID_METABOLISM" class="uri">https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_FATTY_ACID_METABOLISM</a>
+Genes encoding proteins involved in metabolism of fatty acids <a href="https://pubmed.ncbi.nlm.nih.gov/87483/#" class="uri">https://pubmed.ncbi.nlm.nih.gov/87483/#</a>:~:text=Progressive%20alteration%20of%20the%20mitochondria,production%2C%20which%20results%20in%20ketonemia.
+“Progressive alteration of the mitochondria, which occurs during chronic
+alcohol consumption, decreases fatty acid oxidation by interfering with
+citric acid cycle activity. This block is partially compensated for by
+increased ketone body production, which results in ketonemia.”</p>
+<p>TES.brain.5.Hallmark: HALLMARK_INTERFERON_GAMMA_RESPONSE <a href="https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_INTERFERON_GAMMA_RESPONSE.html" class="uri">https://www.gsea-msigdb.org/gsea/msigdb/cards/HALLMARK_INTERFERON_GAMMA_RESPONSE.html</a>
+Genes up-regulated in response to IFNG INFG protein: secreted as a part
+of innate and adaptive immune systems Cytokines and lipid peroxidation
+in alcoholics with chronic hepatitis C virus infection: <a href="https://academic.oup.com/alcalc/article/43/2/137/122851" class="uri">https://academic.oup.com/alcalc/article/43/2/137/122851</a></p>
+<p>TES.brain.5.C2-KEGG: KEGG_PPAR_SIGNALING_PATHWAY <a href="https://www.gsea-msigdb.org/gsea/msigdb/cards/KEGG_PPAR_SIGNALING_PATHWAY" class="uri">https://www.gsea-msigdb.org/gsea/msigdb/cards/KEGG_PPAR_SIGNALING_PATHWAY</a>
+Peroxisome proliferator-activated receptors- nuclear hormone receptors
+activated by fatty acids liver pathway: <a href="https://www.genome.jp/kegg/pathway/hsa/hsa03320.html" class="uri">https://www.genome.jp/kegg/pathway/hsa/hsa03320.html</a> <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4308472/" class="uri">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4308472/</a>
+Peroxisome proliferator-activated receptors alpha and gamma are linked
+with alcohol consumption in mice and withdrawal and dependence in
+humans</p>
+<p>TES.liver.1.Hallmark: HALLMARK_KRAS_SIGNALLING_DN * see
+TES.brain.2.Hallmark</p>
+<p>TES.liver.1.C2-KEGG: KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION
+pathway: <a href="https://www.genome.jp/kegg/pathway/hsa/hsa04080.html" class="uri">https://www.genome.jp/kegg/pathway/hsa/hsa04080.html</a></p>
 </div>
 </div>
 
