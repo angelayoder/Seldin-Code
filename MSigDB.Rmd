@@ -2,6 +2,9 @@
 title: "Gene Enrichment Analysis with MSigDB"
 author: "Angela Yoder"
 date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 **The goals of this program are:**
@@ -14,7 +17,7 @@ date: "`r Sys.Date()`"
 For our gene set enrichment analysis (GSEA), we will be using the data resource MSigDB (Molecular Signatures Database), "a collection of annotated gene sets for use with GSEA software." This dataset was used in conjunction with the GSEA R package clusterProfiler. 
 We identified our enrichment dataset via the function msigdbr from the msigdbr r package. The species was identified as "Rattus norvegicus." msigdbr has access to multiple collections, including hallmark gene sets (H), and eight different supplementary gene sets (C1 to C8). In this analysis, we focused on the Hallmark Sets (H), KEGG Pathways (part of C2), and GO: Biological Processes (part of C5). 
 
-```{r, echo = FALSE}
+```{r}
 library(msigdbr)
 
 H_genes = msigdbr(species = "Rattus norvegicus", category = "H")
@@ -27,7 +30,7 @@ C5_genes = msigdbr(species = "Rattus norvegicus", category = "C5") #GO genes
 
 ```
 
-```{r, echo = FALSE}
+```{r}
 
 #setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
 setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
@@ -63,7 +66,7 @@ top.liver = tesec_liver[1,]
 ```
 The top Tissue-Exclusive, Secreted (TES) protein-coding genes were determined in SeldinReport_fix.Rmd by determining which TES protein-coding genes had Ssec scores higher than the 95th percentile of Ssec scores from tissue-exclusive, non-secreted (TENS) protein-coding genes. We then identified the target tissue transcripts that were most significantly associated with the top TES protein-coding genes (p-value < 0.05). These will be the gene sets for which we will identify annotations.  
 
-```{r, echo = FALSE}
+```{r}
 
 # genes they are correlated to < 0.05
 
@@ -115,6 +118,9 @@ setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/D
 summ.brain = read.csv("Summary_Table_topSsec_brain.csv")
 summ.liver = read.csv("Summary_Table_topSsec_liver.csv")
 
+summ.brain = fix.read.csv(summ.brain)
+summ.liver = fix.read.csv(summ.liver)
+
 knitr::kable(summ.brain, caption = "Summary of Top Ssec Scores for Brain")
 knitr::kable(summ.liver, caption = "Summary of Top Ssec Score for Liver")
 
@@ -129,10 +135,9 @@ When retrieving Entrez IDs for our gene sets of interest, I found that many of t
 ```{r, echo = FALSE, eval = FALSE}
 
 library(biomaRt)
-#ensembl_version = "https://ensembl.org"
 
 #ensembl = useMart(biomart = "ENSEMBL_MART_ENSEMBL", dataset = "rnorvegicus_gene_ensembl", version = 109)
-ensembl.miss = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl")
+ensembl = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl")
 ensembl = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl", version = 104)
 
 get_attrib <- listAttributes(ensembl)
@@ -150,10 +155,13 @@ get_entrez = getBM(attributes=c("ensembl_gene_id",
                             "entrezgene_id"),
                  filters = 'biotype',
                  values = "protein_coding",
-                 mart = ensembl.miss)
+                 mart = ensembl)
 
 
 entrez_brain.1= get_entrez[get_entrez$ensembl_gene_id %in% combine.brain,]
+
+entrez_topbrain = get_entrez[get_entrez$ensembl_gene_id %in% top.brain$Gene_symbol,]
+entrez_topliver = get_entrez[get_entrez$ensembl_gene_id %in% top.liver$Gene_symbol,]
 
 #sum(get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
 #GO_fin = subset(get_uniprot, get_uniprot$ensembl_gene_id %in% rownames(ts_Ssec_target_brain))
@@ -175,6 +183,8 @@ missing_l = combine.liver[combine.liver %!in% entrez_liver.1$ensembl_gene_id]
 
 #setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
 setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+write.csv(entrez_topbrain, "EntrezIds_topbrain.csv")
+write.csv(entrez_topliver, "EntrezIds_topliver.csv")
 write.csv(entrez_brain.1, "EntrezIds_brain.csv")
 write.csv(entrez_liver.1, "EntrezIds_liver.csv")
 
@@ -186,7 +196,7 @@ missingness = data.frame(dataset = c("TES Brain", "Sig Target Genes Brain", "TES
 
 knitr::kable(missingness, caption = "Missing Ensembl IDs within Datasets")
 
-missing.tes.liver = c("ENSRNOG00000020805", "ENSRNOG00000050499", "ENSRNOG00000049727", "ENSRNOG00000033130", "ENSRNOG00000042543", "ENSRNOG00000046529", "ENSRNOG00000013464", "ENSRNOG00000049515", "ENSRNOG00000013410", "ENSRNOG00000016535", "ENSRNOG00000033619", "ENSRNOG00000033245")
+#missing.tes.liver = c("ENSRNOG00000020805", "ENSRNOG00000050499", "ENSRNOG00000049727", "ENSRNOG00000033130", "ENSRNOG00000042543", "ENSRNOG00000046529", "ENSRNOG00000013464", "ENSRNOG00000049515", "ENSRNOG00000013410", "ENSRNOG00000016535", "ENSRNOG00000033619", "ENSRNOG00000033245")
 
 ```
 
@@ -194,7 +204,6 @@ missing.tes.liver = c("ENSRNOG00000020805", "ENSRNOG00000050499", "ENSRNOG000000
 
 ![Missing Gene: ENSRNOG00000013464](C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data/ENSRNOG00000013464_Ensembl.png)
 
-Of most concern were the 12 missing Ensembl IDs from the TES protein-coding genes in the liver (34% of total missing). We investigated further and found that these genes are still available in Ensembl databases, under different names. 
 
 ```{r, echo = FALSE, eval = FALSE}
 
@@ -209,11 +218,135 @@ knitr::kable(miss.tes.liver, caption = "Ensembl ID History Converter")
 
 ```
 
-Additionally, significant target genes brain were found to have a high degree of missingness, with 36% missing. 
+## Remapping Missing Ensembl IDs
+
+Due to this missingness, efforts were made to identify new Ensembl IDs for these missing genes. Updated Ensembl IDs for the missing IDs were retrieved via Ensembl.org's ID History Converter, whose output was subsetted by updates to Version 105. A decent portion of our missing Ensembl IDs had corresponding IDs in the new version, however, many were divided into multiple IDs. These were not able to be converted one-to-one due to uncertainty about which version of the new IDs our detected genes would map to. This resulted in only one target gene from the brain and one target gene from the liver having a viable one-to-one match to a Version 105 Ensembl ID. 
+
+```{r}
+
+## we got this from http://uswest.ensembl.org/Rattus_norvegicus/Tools/IDMapper?db=core;expand_form=true;tl=veVyFBLEW339Hw8k-8445349
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+
+remap.tesbrain = read.csv("remapping_TESbrain.csv")
+remap.tesliver = read.csv("remapping_TESliver.csv")
+remap.targetbrain = read.csv("remapping_targetbrain.csv")
+remap.targetliver = read.csv("remapping_targetliver.csv")
+
+remap.tesbrain$Releases = sub("\\:.*", "", remap.tesbrain$Releases)
+remap.targetbrain$Releases = sub("\\:.*", "", remap.targetbrain$Releases)
+remap.tesliver$Releases = sub("\\:.*", "", remap.tesliver$Releases)
+remap.targetliver$Releases = sub("\\:.*", "", remap.targetliver$Releases)
+
+remap.tesbrain.105 = remap.tesbrain[remap.tesbrain$Releases == 105, ]
+remap.targetbrain.105 = remap.targetbrain[remap.targetbrain$Releases == 105, ]
+remap.tesliver.105 = remap.tesliver[remap.tesliver$Releases == 105, ]
+remap.targetliver.105 = remap.targetliver[remap.targetliver$Releases == 105, ]
+
+```
+
+```{r}
+
+# summary
+
+summ.remap = data.frame(dataset = missingness$dataset, total.genes = missingness$total, missing.genes = missingness$missing, num.remapped = c(nrow(remap.tesbrain.105), nrow(remap.targetbrain.105), nrow(remap.tesliver.105), nrow(remap.targetliver.105)), num.unique.remapped = c(length(unique(remap.tesbrain.105$Requested.ID)), length(unique(remap.targetbrain.105$Requested.ID)), length(unique(remap.tesliver.105$Requested.ID)), length(unique(remap.targetliver.105$Requested.ID))))
+
+#knitr::kable(summ.remap)
+
+```
+
+```{r}
+
+# usable remapping
+
+only.one = function(x)
+{
+  out = c()
+  for (i in 1:length(x))
+  {
+    if (x[i] %in% x[-i])
+    {
+      out = out
+    }
+    else
+    {
+      out = c(out, x[i])
+    }
+  }
+  return(out)
+}
+
+usable.tesbrain = remap.tesbrain.105[remap.tesbrain.105$Requested.ID %in% only.one(remap.tesbrain.105$Requested.ID),]
+usable.targetbrain = remap.targetbrain.105[remap.targetbrain.105$Requested.ID %in% only.one(remap.targetbrain.105$Requested.ID),]
+usable.tesliver = remap.tesliver.105[remap.tesliver.105$Requested.ID %in% only.one(remap.tesliver.105$Requested.ID), ]
+usable.targetliver = remap.targetliver.105[remap.targetliver.105$Requested.ID %in% only.one(remap.targetliver.105$Requested.ID),]
+
+one.to.one.match = c(length(usable.tesbrain$Requested.ID), length(usable.targetbrain$Requested.ID), length(usable.tesliver$Requested.ID), length(usable.targetliver$Requested.ID))
+
+summ.remap = data.frame(summ.remap, one.to.one.match)
+
+knitr::kable(summ.remap)
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+
+# getting entrez IDs for these Ensembl IDs
+# replace ensembl in combine brain and then rerun
+
+replace.id = function(final, replace)
+{
+  for(i in 1:length(replace$Requested.ID))
+  {
+    final[final == replace$Requested.ID[i]] = replace$Matched.ID.s[i]
+  }
+  return(final)
+}
+
+combine.brain.remap = replace.id(combine.brain, usable.targetbrain)
+combine.liver.remap = replace.id(combine.liver, usable.targetliver)
+
+# run biomart to get entrez IDS
+
+library(biomaRt)
+
+ensembl = useEnsembl(biomart="ensembl",dataset = "rnorvegicus_gene_ensembl")
+
+get_entrez = getBM(attributes=c("ensembl_gene_id",
+                              "external_gene_name",
+                              "description",
+                              "chromosome_name",
+                              "start_position",
+                              "end_position",
+                              "gene_biotype",
+                            #"entrezgene_trans_name",
+                            "entrezgene_id"),
+                 filters = 'biotype',
+                 values = "protein_coding",
+                 mart = ensembl)
+
+
+entrez_brain.1= get_entrez[get_entrez$ensembl_gene_id %in% combine.brain,]
+
+entrez_liver.1 = get_entrez[get_entrez$ensembl_gene_id %in% combine.liver,]
+
+# compare to other dataframe
+
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+entrez_brain = read.csv("EntrezIds_brain.csv")
+entrez_liver = read.csv("EntrezIds_liver.csv")
+
+entrez_brain = fix.read.csv(entrez_brain)
+entrez_liver = fix.read.csv(entrez_liver)
+
+
+```
 
 ## Enrichment Analysis
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
+Summary of enrichment analysis was complicated by the R function enricher not including fold enrichment in its output. I have included a summary table of the number of enriched terms for each top TES protein-coding gene in this analysis. At the end of the document, there are also plots provided in the r package enrichplot, though they would only correspond to a single TES protein-coding gene's analysis within a single gene set. I am unsure how useful they would be in describing these relationships. 
+
+```{r, message = FALSE, warning = FALSE}
 
 #setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
 setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
@@ -331,169 +464,194 @@ out.liver_C5 = list(c())
   listt = enricher(gene = entrez, TERM2GENE = database, pAdjustMethod = "fdr")
   out.liver_C5[[1]] = data.frame(ID = listt$ID, pvalue = listt$pvalue, p.adjust = listt$p.adjust, geneID = listt$geneID)
 
+```
 
+```{r}
+# looking for correlations to TES also
 
-#brain.ids = c(paste(out.brain[[1]]$ID, collapse = ", "), paste(out.brain[[2]]$ID, collapse = ", "), paste(out.brain[[3]]$ID, collapse = ", "), paste(out.brain[[4]]$ID, collapse = ", "), paste(out.brain[[5]]$ID, collapse = ", "))
-#names(brain.ids) = top.brain[,1]
+setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
+entrez_topbrain = read.csv("EntrezIds_topbrain.csv")
+entrez_topliver = read.csv("EntrezIds_topliver.csv")
 
-#knitr::kable(brain.ids, caption = "Enrichment of Target Liver Genes Influenced by TES Protein-Coding Genes from the Brain", colnames = "")
+database = msigdbr_t2g_H
+two.H = enricher(gene = c(entrez_topbrain$entrezgene_id[2], 315323, 171154), TERM2GENE = database, pAdjustMethod = "fdr")
+#two.H$geneID
 
-#liver.ids = c(paste(out.liver[[1]]$ID, collapse = ", "), paste(out.liver[[2]]$ID, collapse = ", "), paste(out.liver[[3]]$ID, collapse = ", "), paste(out.liver[[4]]$ID, collapse = ", "), paste(out.liver[[5]]$ID, collapse = ", "))
-#names(liver.ids) = top.liver[,1]
+five.H1 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[5], 50549, 84029, 25598, 29171)), TERM2GENE = database, pAdjustMethod = "fdr")
+#five.H1$geneID
 
-#knitr::kable(liver.ids, caption = "Enrichment of Target Liver Genes Influenced by TES Protein-Coding Genes from the Liver", colnames = "")
+five.H2 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[5], 266708, 29187, 309178, 171371)), TERM2GENE = database, pAdjustMethod = "fdr")
+#five.H2$geneID
 
-# C8
+database = msigdbr_t2g_C2
+five.c2 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[5], 50549, 25598, 29171)), TERM2GENE = database, pAdjustMethod = "fdr")
+#five.c2$geneID
 
-#out.brain_C8 = list(c(), c(), c(), c(), c())
-#database = msigdbr_t2g_C8
+six.c2 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[6], 291283, 307092, 289533, 63867)), TERM2GENE = database, pAdjustMethod = "fdr")
+#six.c2$geneID
 
-#for (i in 1:5)
-#{
-#  vect = brain.list[[i]]
-#  entrez = entrez_brain$entrezgene_id[entrez_brain$ensembl_gene_id %in% vect]
-#  entrez = na.omit(entrez)
-#  listt = enricher(gene = entrez, TERM2GENE = database, pAdjustMethod = "fdr")
-#  out.brain_C8[[i]] = data.frame(ID = listt$ID, Description = #listt$Description, pvalue = listt$pvalue, p.adjust = listt$p.adjust, geneID = #listt$geneID)
-#}
+database = msigdbr_t2g_C5
+one.c5 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[1], 296366, 312102, 301229, 289057)), TERM2GENE = database, pAdjustMethod = "fdr")
+#one.c5$geneID
 
-#out.liver_C8 = list(c(), c(), c(), c(), c())
+two.c5 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[2], 29300, 117033, 25098)), TERM2GENE = database, pAdjustMethod = "fdr")
+#two.c5$geneID
+# "311862/117033"
 
-#for (i in 1:5)
-#{
-#  vect = liver.list[[i]]
-#  entrez = entrez_liver$entrezgene_id[entrez_liver$ensembl_gene_id %in% vect]
-#  entrez = na.omit(entrez)
-#  listt = enricher(gene = entrez, TERM2GENE = database, pAdjustMethod = "fdr")
-#  out.liver_C8[[i]] = data.frame(ID = listt$ID, Description = #listt$Description, pvalue = listt$pvalue, p.adjust = listt$p.adjust, geneID = #listt$geneID)
-#}
+three.c5 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[3], 24833, 408236, 81806, 171154)), TERM2GENE = database, pAdjustMethod = "fdr")
+#three.c5$geneID
 
+six.c5 = enricher(gene = c(c(entrez_topbrain$entrezgene_id[6], 291283, 311387, 307092)), TERM2GENE = database, pAdjustMethod = "fdr")
+#six.c5$geneID
 
-#brain.ids = c(paste(out.brain[[1]]$ID, collapse = ", "), paste(out.brain[[2]]$ID, collapse = ", "), paste(out.brain[[3]]$ID, collapse = ", "), paste(out.brain[[4]]$ID, collapse = ", "), paste(out.brain[[5]]$ID, collapse = ", "))
-#names(brain.ids) = top.brain[,1]
+database = msigdbr_t2g_H
+liver.H = enricher(gene = c(c(entrez_topliver$entrezgene_id, 24294, 689619, 79208, 29471, 24898, 25412, 25546, 25041, 29361)), TERM2GENE = database, pAdjustMethod = "fdr")
+#liver.H$geneID
 
-#knitr::kable(brain.ids, caption = "Enrichment of Target Liver Genes Influenced by TES Protein-Coding Genes from the Brain", colnames = "")
+################# LOOK INTO THIS ONE #####################
+database = msigdbr_t2g_C2
+liver.c2 = enricher(gene = c(c(entrez_topliver$entrezgene_id, 65187, 24409, 289606, 25153, 24182, 24410, 140675, 25033, 29595, 116506, 24316, 81721, 24922, 29471, 25674, 24418, 29234, 170796, 25041)), TERM2GENE = database, pAdjustMethod = "fdr")
+#liver.c2$geneID
 
-#liver.ids = c(paste(out.liver[[1]]$ID, collapse = ", "), paste(out.liver[[2]]$ID, collapse = ", "), paste(out.liver[[3]]$ID, collapse = ", "), paste(out.liver[[4]]$ID, collapse = ", "), paste(out.liver[[5]]$ID, collapse = ", "))
-#names(liver.ids) = top.liver[,1]
-
-#knitr::kable(liver.ids, caption = "Enrichment of Target Liver Genes Influenced by TES Protein-Coding Genes from the Liver", colnames = "")
-
-#first.brain = rbind(out.brain_H[[1]], out.brain_C2[[1]], out.brain_C5[[1]], out.brain_C8[[1]])
-#second.brain = rbind(out.brain_H[[2]], out.brain_C2[[2]], out.brain_C5[[2]], out.brain_C8[[2]])
-#third.brain = rbind(out.brain_H[[3]], out.brain_C2[[3]], out.brain_C5[[3]], out.brain_C8[[3]])
-#fourth.brain = rbind(out.brain_H[[4]], out.brain_C2[[4]], out.brain_C5[[4]], out.brain_C8[[4]])
-#fifth.brain = rbind(out.brain_H[[5]], out.brain_C2[[5]], out.brain_C5[[5]], out.brain_C8[[5]])
-
-#first.liver = rbind(out.liver_H[[1]], out.liver_C2[[1]], out.liver_C5[[1]], out.liver_C8[[1]])
-#second.liver = rbind(out.liver_H[[2]], out.liver_C2[[2]], out.liver_C5[[2]], out.liver_C8[[2]])
-#third.liver = rbind(out.liver_H[[3]], out.liver_C2[[3]], out.liver_C5[[3]], out.liver_C8[[3]])
-#fourth.liver = rbind(out.liver_H[[4]], out.liver_C2[[4]], out.liver_C5[[4]], out.liver_C8[[4]])
-#fifth.liver = rbind(out.liver_H[[5]], out.liver_C2[[5]], out.liver_C5[[5]], out.liver_C8[[5]])
-
-#setwd("C:/Users/angel/OneDrive/Desktop/Saba Lab/Data/")
-#setwd("C:/Users/yodeange/OneDrive - The University of Colorado Denver/Saba Lab/Data")
-#write.csv(first.brain, "Brain Enrichment_1.csv")
-#write.csv(second.brain, "Brain Enrichment_2.csv")
-#write.csv(third.brain, "Brain Enrichment_3.csv")
-#write.csv(fourth.brain, "Brain Enrichment_4.csv")
-#write.csv(fifth.brain, "Brain Enrichment_5.csv")
-
-#write.csv(first.liver, "liver Enrichment_1.csv")
-#write.csv(second.liver, "liver Enrichment_2.csv")
-#write.csv(third.liver, "liver Enrichment_3.csv")
-#write.csv(fourth.liver, "liver Enrichment_4.csv")
-#write.csv(fifth.liver, "liver Enrichment_5.csv")
+database = msigdbr_t2g_C5
+liver.c5 = enricher(gene = c(c(entrez_topliver$entrezgene_id, 65187, 24409, 689043, 289606, 114032, 60337, 50599, 170899, 24410, 140675, 117018, 307206, 24316, 81721, 24922, 29161, 294388, 29701, 25674, 170739, 24602, 78956, 24418, 307540, 25041)), TERM2GENE = database, pAdjustMethod = "fdr")
+#liver.c5$geneID
 
 ```
 
 ### Enrichment of Target Liver Protein-Coding Genes acted upon by TES Protein-Coding Genes from Brain
 
+```{r}
+
+hallmark.brain = c(nrow(out.brain_H[[1]]), nrow(out.brain_H[[2]]), nrow(out.brain_H[[3]]), nrow(out.brain_H[[4]]), nrow(out.brain_H[[5]]), nrow(out.brain_H[[6]]))
+
+these_1k = grep("KEGG", out.brain_C2[[1]][,1], value = TRUE)
+these_2k = grep("KEGG", out.brain_C2[[2]][,1], value = TRUE)
+these_3k = grep("KEGG", out.brain_C2[[3]][,1], value = TRUE)
+these_4k = grep("KEGG", out.brain_C2[[4]][,1], value = TRUE)
+these_5k = grep("KEGG", out.brain_C2[[5]][,1], value = TRUE)
+these_6k = grep("KEGG", out.brain_C2[[6]][,1], value = TRUE)
+
+kegg.brain = c(nrow(out.brain_C2[[1]][out.brain_C2[[1]][,1] %in% these_1k,]), 
+               nrow(out.brain_C2[[2]][out.brain_C2[[2]][,1] %in% these_2k,]), 
+               nrow(out.brain_C2[[3]][out.brain_C2[[3]][,1] %in% these_3k,]), 
+               nrow(out.brain_C2[[4]][out.brain_C2[[4]][,1] %in% these_4k,]), 
+               nrow(out.brain_C2[[5]][out.brain_C2[[5]][,1] %in% these_5k,]), 
+               nrow(out.brain_C2[[6]][out.brain_C2[[6]][,1] %in% these_6k,]))
+
+these_1g = grep("GOBP", out.brain_C5[[1]][,1], value = TRUE)
+these_2g = grep("GOBP", out.brain_C5[[2]][,1], value = TRUE)
+these_3g = grep("GOBP", out.brain_C5[[3]][,1], value = TRUE)
+these_4g = grep("GOBP", out.brain_C5[[4]][,1], value = TRUE)
+these_5g = grep("GOBP", out.brain_C5[[5]][,1], value = TRUE)
+these_6g = grep("GOBP", out.brain_C5[[6]][,1], value = TRUE)
+
+
+go.brain = c(nrow(out.brain_C5[[1]][out.brain_C5[[1]][,1] %in% these_1g,]), 
+               nrow(out.brain_C5[[2]][out.brain_C5[[2]][,1] %in% these_2g,]), 
+               nrow(out.brain_C5[[3]][out.brain_C5[[3]][,1] %in% these_3g,]), 
+               nrow(out.brain_C5[[4]][out.brain_C5[[4]][,1] %in% these_4g,]), 
+               nrow(out.brain_C5[[5]][out.brain_C5[[5]][,1] %in% these_5g,]), 
+               nrow(out.brain_C5[[6]][out.brain_C5[[6]][,1] %in% these_6g,]))
+
+summary.brain = data.frame(gene.symbol = summ.brain$Gene_Symbol, hallmark.terms = hallmark.brain, kegg.terms = kegg.brain, go.bio.process.terms = go.brain, sig.target.genes = summ.brain$Number_Target_Genes)
+
+knitr::kable(summary.brain, caption = "Number of Significant Terms for Each Top Brain TES Protein-Coding Genes")
+
+```
+
 #### HALLMARK GENE SET
 
-```{r, echo = FALSE}
+```{r}
 
-knitr::kable(out.brain_H[[1]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000005652")
-knitr::kable(out.brain_H[[2]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000002548")
-knitr::kable(out.brain_H[[3]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000002381")
-knitr::kable(out.brain_H[[4]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000003845")
-knitr::kable(out.brain_H[[5]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000059507")
-knitr::kable(out.brain_H[[6]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000000010")
+#knitr::kable(out.brain_H[[1]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000005652")
+knitr::kable(out.brain_H[[2]], caption = "2. Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000002548")
+#knitr::kable(out.brain_H[[3]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000002381")
+#knitr::kable(out.brain_H[[4]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000003845")
+knitr::kable(out.brain_H[[5]], caption = "5. Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000059507")
+#knitr::kable(out.brain_H[[6]], caption = "Hallmark Brain TES Protein-Coding Gene: ENSRNOG00000000010")
 
 ```
 
 #### C2 GENE SET
 
-```{r, echo = FALSE}
+```{r}
 # Search KEGG
 
-these_1 = grep("KEGG", out.brain_C2[[1]][,1], value = TRUE)
-these_2 = grep("KEGG", out.brain_C2[[2]][,1], value = TRUE)
-these_3 = grep("KEGG", out.brain_C2[[3]][,1], value = TRUE)
-these_4 = grep("KEGG", out.brain_C2[[4]][,1], value = TRUE)
-these_5 = grep("KEGG", out.brain_C2[[5]][,1], value = TRUE)
-these_6 = grep("KEGG", out.brain_C2[[6]][,1], value = TRUE)
-
-knitr::kable(out.brain_C2[[1]][out.brain_C2[[1]][,1] %in% these_1,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000005652")
-knitr::kable(out.brain_C2[[2]][out.brain_C2[[2]][,1] %in% these_2,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000002548")
-knitr::kable(out.brain_C2[[3]][out.brain_C2[[3]][,1] %in% these_3,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000002381")
-knitr::kable(out.brain_C2[[4]][out.brain_C2[[4]][,1] %in% these_4,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000003845")
-knitr::kable(out.brain_C2[[5]][out.brain_C2[[5]][,1] %in% these_5,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000059507")
-knitr::kable(out.brain_C2[[6]][out.brain_C2[[6]][,1] %in% these_6,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000000010")
+#knitr::kable(out.brain_C2[[1]][out.brain_C2[[1]][,1] %in% these_1k,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000005652")
+#knitr::kable(out.brain_C2[[2]][out.brain_C2[[2]][,1] %in% these_2k,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000002548")
+#knitr::kable(out.brain_C2[[3]][out.brain_C2[[3]][,1] %in% these_3k,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000002381")
+#knitr::kable(out.brain_C2[[4]][out.brain_C2[[4]][,1] %in% these_4k,], caption = "C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000003845")
+knitr::kable(out.brain_C2[[5]][out.brain_C2[[5]][,1] %in% these_5k,], caption = "5. C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000059507")
+knitr::kable(out.brain_C2[[6]][out.brain_C2[[6]][,1] %in% these_6k,], caption = "6. C2: KEGG Brain TES Protein-Coding Gene: ENSRNOG00000000010")
 
 ```
 
 #### C5 GENE SET
 
-```{r, echo = FALSE}
+```{r}
 
-these_1 = grep("GOBP", out.brain_C5[[1]][,1], value = TRUE)
-these_2 = grep("GOBP", out.brain_C5[[2]][,1], value = TRUE)
-these_3 = grep("GOBP", out.brain_C5[[3]][,1], value = TRUE)
-these_4 = grep("GOBP", out.brain_C5[[4]][,1], value = TRUE)
-these_5 = grep("GOBP", out.brain_C5[[5]][,1], value = TRUE)
-these_6 = grep("GOBP", out.brain_C5[[6]][,1], value = TRUE)
-
-knitr::kable(out.brain_C5[[1]][out.brain_C5[[1]][,1] %in% these_1,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000005652")
-knitr::kable(out.brain_C5[[2]][out.brain_C5[[2]][,1] %in% these_2,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000002548")
-knitr::kable(out.brain_C5[[3]][out.brain_C5[[3]][,1] %in% these_3,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000002381")
-knitr::kable(out.brain_C5[[4]][out.brain_C5[[4]][,1] %in% these_4,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000003845")
-knitr::kable(out.brain_C5[[5]][out.brain_C5[[5]][,1] %in% these_5,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000059507")
-knitr::kable(out.brain_C5[[6]][out.brain_C5[[6]][,1] %in% these_6,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000000010")
+knitr::kable(out.brain_C5[[1]][out.brain_C5[[1]][,1] %in% these_1g,], caption = "1. C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000005652")
+knitr::kable(out.brain_C5[[2]][out.brain_C5[[2]][,1] %in% these_2g,], caption = "2. C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000002548")
+knitr::kable(out.brain_C5[[3]][out.brain_C5[[3]][,1] %in% these_3g,], caption = "3. C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000002381")
+#knitr::kable(out.brain_C5[[4]][out.brain_C5[[4]][,1] %in% these_4g,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000003845")
+#knitr::kable(out.brain_C5[[5]][out.brain_C5[[5]][,1] %in% these_5g,], caption = "C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000059507")
+knitr::kable(out.brain_C5[[6]][out.brain_C5[[6]][,1] %in% these_6g,], caption = "6. C5: GO Biological Process Brain TES Protein-Coding Gene: ENSRNOG00000000010")
 
 ```
 
 ### Enrichment of Target Brain Protein-Coding Genes acted upon by TES Protein-Coding Genes from Liver
 
+```{r}
+
+hallmark.liver = nrow(out.liver_H[[1]])
+
+these_1k = grep("KEGG", out.liver_C2[[1]][,1], value = TRUE)
+kegg.liver = nrow(out.liver_C2[[1]][out.liver_C2[[1]][,1] %in% these_1k,])
+
+these_1g = grep("GOBP", out.liver_C5[[1]][,1], value = TRUE)
+go.liver = nrow(out.liver_C5[[1]][out.liver_C5[[1]][,1] %in% these_1g,])
+
+summary.liver = data.frame(gene.symbol = summ.liver$Gene_Symbol, hallmark.terms = hallmark.liver, kegg.terms = kegg.liver, go.bio.process.terms = go.liver, sig.target.genes = summ.liver$Number_Target_Genes)
+
+knitr::kable(summary.liver, caption = "Number of Significant Terms for Each Top Liver TES Protein-Coding Genes")
+
+```
+
 #### HALLMARK GENE SET
 
-```{r, echo = FALSE}
+```{r}
 
 knitr::kable(out.liver_H[[1]], caption = "Hallmark Liver TES Protein-Coding Gene: ENSRNOG00000047481")
-
 
 ```
 
 #### C2 GENE SET
 
-```{r, echo = FALSE}
+```{r}
 # search KEGG
 
-these_1 = grep("KEGG", out.liver_C2[[1]][,1], value = TRUE)
-
-
-knitr::kable(out.liver_C2[[1]][out.liver_C2[[1]][,1] %in% these_1,], caption = "C2: KEGG Liver TES Protein-Coding Gene: ENSRNOG00000047481")
-
+knitr::kable(out.liver_C2[[1]][out.liver_C2[[1]][,1] %in% these_1k,], caption = "C2: KEGG Liver TES Protein-Coding Gene: ENSRNOG00000047481")
 
 ```
 
 #### C5 GENE SET
 
-```{r, echo = FALSE}
+```{r}
 
-these_1 = grep("GOBP", out.liver_C5[[1]][,1], value = TRUE)
+knitr::kable(out.liver_C5[[1]][out.liver_C5[[1]][,1] %in% these_1g,], caption = "C5: GO Biological Processes Liver TES Protein-Coding Gene: ENSRNOG00000047481")
 
-knitr::kable(out.liver_C5[[1]][out.liver_C5[[1]][,1] %in% these_1,], caption = "C5: GO Biological Processes Liver TES Protein-Coding Gene: ENSRNOG00000047481")
+```
+
+### Other Plots
+
+```{r}
+
+library(enrichplot)
+barplot(listt)
+cnetplot(listt) 
+dotplot(listt)
+#goplot(listt) #DAG
 
 ```
 
